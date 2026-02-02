@@ -1,0 +1,314 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business 100: The Velocity of Money Interactive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .math-font {
+            font-family: 'Times New Roman', Times, serif;
+            font-style: italic;
+        }
+
+        .velocity-node {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        input[type=range] {
+            accent-color: #3b82f6;
+        }
+
+        .pulse {
+            animation: pulse-animation 2s infinite;
+        }
+
+        @keyframes pulse-animation {
+            0% { box-shadow: 0 0 0 0px rgba(59, 130, 246, 0.4); }
+            100% { box-shadow: 0 0 0 20px rgba(59, 130, 246, 0); }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header / Intro -->
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl font-bold text-slate-900 mb-2">Business 100: Economics Module</h1>
+            <div class="mt-6 flex justify-center gap-4">
+                <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">M1 Money Supply</span>
+                <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-semibold">Equation of Exchange</span>
+                <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold">GDP Impact</span>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Sidebar: Concepts -->
+            <div class="lg:col-span-1 space-y-6">
+                <div class="glass-card rounded-2xl p-6">
+                    <h2 class="text-xl font-bold mb-4 flex items-center">
+                        <span class="mr-2">📖</span> Lecture Notes
+                    </h2>
+                    <div class="space-y-4 text-slate-700 leading-relaxed">
+                        <p>
+                            <strong>The Velocity of Money (V)</strong> is the frequency at which the average unit of currency is used to purchase newly domestically-produced goods and services within a given time period.
+                        </p>
+                        <div class="bg-slate-50 p-4 rounded-lg border-l-4 border-blue-500">
+                            <p class="text-sm font-semibold mb-1">Equation of Exchange:</p>
+                            <p class="text-2xl text-center math-font">MV = PQ</p>
+                        </div>
+                        <ul class="text-sm space-y-2">
+                            <li><strong class="text-blue-600">M:</strong> Money Supply (M1)</li>
+                            <li><strong class="text-green-600">V:</strong> Velocity</li>
+                            <li><strong class="text-purple-600">P:</strong> Price Level (Inflation)</li>
+                            <li><strong class="text-orange-600">Q:</strong> Real Output (GDP)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 border-blue-200 bg-blue-50">
+                    <h3 class="font-bold text-blue-800 mb-2">Professor's Insight</h3>
+                    <p class="text-sm text-blue-900 italic">
+                        "Think of M1 as the gasoline in the tank, and Velocity as the RPM of the engine. Even if you have lots of gas (High M1), the car won't move fast if the engine is idling (Low Velocity)."
+                    </p>
+                </div>
+            </div>
+
+            <!-- Main Interactive Area -->
+            <div class="lg:col-span-2 space-y-8">
+                
+                <!-- Simulation Controls -->
+                <div class="glass-card rounded-2xl p-8">
+                    <h2 class="text-2xl font-bold mb-6">Interactive Economy Simulator</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                        <!-- Inputs -->
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2 flex justify-between">
+                                    <span>Money Supply (M1)</span>
+                                    <span class="text-blue-600" id="m-val">$2.0T</span>
+                                </label>
+                                <input type="range" id="m-slider" min="0.5" max="10" step="0.1" value="2" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                                <p class="text-xs text-slate-500 mt-1">Cash, checking accounts, highly liquid assets.</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2 flex justify-between">
+                                    <span>Velocity (V)</span>
+                                    <span class="text-green-600" id="v-val">1.5</span>
+                                </label>
+                                <input type="range" id="v-slider" min="0.1" max="5" step="0.1" value="1.5" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                                <p class="text-xs text-slate-500 mt-1">Number of times $1 is spent per year.</p>
+                            </div>
+                        </div>
+
+                        <!-- Real-time Visualizer -->
+                        <div class="flex flex-col items-center justify-center border-l border-slate-100 pl-4">
+                            <div class="text-center">
+                                <span class="text-slate-500 text-sm uppercase tracking-widest font-semibold">Nominal GDP (PQ)</span>
+                                <div id="gdp-display" class="text-5xl font-black text-slate-900 mt-2">$3.00T</div>
+                                <div class="mt-4 flex gap-2 justify-center">
+                                    <div id="velocity-indicator" class="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xl">V</div>
+                                    <div class="text-left leading-tight">
+                                        <p class="text-xs font-bold text-slate-400">ECONOMIC PACE</p>
+                                        <p id="pace-text" class="text-sm font-semibold text-slate-700">Moderate</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visual Representation of Transactions -->
+                    <div class="relative h-48 bg-slate-900 rounded-xl overflow-hidden mb-4 border-4 border-slate-800">
+                        <div id="particle-container" class="absolute inset-0"></div>
+                        <div class="absolute inset-0 flex items-center justify-between px-10 pointer-events-none">
+                            <div class="text-white text-center">
+                                <div class="w-12 h-12 bg-blue-600 rounded-lg mx-auto mb-1 flex items-center justify-center">🏦</div>
+                                <span class="text-[10px] font-bold uppercase opacity-50">Banks / M1</span>
+                            </div>
+                            <div class="text-white text-center">
+                                <div class="w-12 h-12 bg-green-600 rounded-lg mx-auto mb-1 flex items-center justify-center">🛒</div>
+                                <span class="text-[10px] font-bold uppercase opacity-50">Markets / GDP</span>
+                            </div>
+                        </div>
+                        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 px-3 py-1 rounded text-white text-[10px]">
+                            Each particle represents $100 Billion moving through the economy
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Chart -->
+                <div class="glass-card rounded-2xl p-8">
+                    <h3 class="text-xl font-bold mb-4">M1 vs. GDP Sensitivity</h3>
+                    <div class="h-64">
+                        <canvas id="sensitivityChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Interactive Quiz / Scenario -->
+                <div class="glass-card rounded-2xl p-8 bg-slate-900 text-white">
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <span class="mr-2">💡</span> Scenario Challenge
+                    </h3>
+                    <p id="scenario-text" class="text-slate-300 mb-6 italic">
+                        "The central bank doubles the money supply (M1), but consumers are afraid to spend, so Velocity drops by 50%. What happens to the Nominal GDP?"
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <button onclick="checkAnswer('increase')" class="px-4 py-3 bg-slate-800 hover:bg-blue-600 rounded-xl border border-slate-700 transition-colors">It Increases</button>
+                        <button onclick="checkAnswer('stays')" class="px-4 py-3 bg-slate-800 hover:bg-blue-600 rounded-xl border border-slate-700 transition-colors">It Stays Same</button>
+                        <button onclick="checkAnswer('decrease')" class="px-4 py-3 bg-slate-800 hover:bg-blue-600 rounded-xl border border-slate-700 transition-colors">It Decreases</button>
+                    </div>
+                    <div id="feedback" class="mt-4 p-4 rounded-xl hidden"></div>
+                </div>
+
+            </div>
+        </div>
+
+        <footer class="mt-12 text-center text-slate-400 text-sm pb-8">
+            &copy; 2024 University of Digital Economics — Business 100 Courseware
+        </footer>
+    </div>
+
+    <script>
+        const mSlider = document.getElementById('m-slider');
+        const vSlider = document.getElementById('v-slider');
+        const mValDisp = document.getElementById('m-val');
+        const vValDisp = document.getElementById('v-val');
+        const gdpDisp = document.getElementById('gdp-display');
+        const paceText = document.getElementById('pace-text');
+        const particleContainer = document.getElementById('particle-container');
+        const feedback = document.getElementById('feedback');
+
+        let particles = [];
+        let chart;
+
+        function initChart() {
+            const ctx = document.getElementById('sensitivityChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Nominal GDP (Trillions)',
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        data: [],
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#e2e8f0' } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.className = 'absolute w-2 h-2 bg-yellow-400 rounded-full shadow-lg shadow-yellow-500/50';
+            particle.style.left = '10%';
+            particle.style.top = (20 + Math.random() * 60) + '%';
+            particleContainer.appendChild(particle);
+            
+            const velocity = parseFloat(vSlider.value);
+            const duration = (6 / velocity) * 1000;
+
+            const anim = particle.animate([
+                { left: '10%', opacity: 1 },
+                { left: '90%', opacity: 1 }
+            ], {
+                duration: duration,
+                easing: 'linear'
+            });
+
+            anim.onfinish = () => {
+                particle.remove();
+            };
+        }
+
+        function updateSimulation() {
+            const m = parseFloat(mSlider.value);
+            const v = parseFloat(vSlider.value);
+            const gdp = m * v;
+
+            mValDisp.innerText = `$${m.toFixed(1)}T`;
+            vValDisp.innerText = v.toFixed(1);
+            gdpDisp.innerText = `$${gdp.toFixed(2)}T`;
+
+            // Update Pace text
+            if (v < 1.0) {
+                paceText.innerText = "Stagnant / Liquidity Trap";
+                paceText.className = "text-sm font-semibold text-red-500";
+            } else if (v < 2.5) {
+                paceText.innerText = "Moderate / Healthy";
+                paceText.className = "text-sm font-semibold text-green-600";
+            } else {
+                paceText.innerText = "Rapid / Overheating";
+                paceText.className = "text-sm font-semibold text-orange-600";
+            }
+
+            // Update Chart
+            if (chart.data.labels.length > 20) {
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+            }
+            chart.data.labels.push(new Date().toLocaleTimeString());
+            chart.data.datasets[0].data.push(gdp);
+            chart.update('none');
+        }
+
+        function checkAnswer(choice) {
+            feedback.classList.remove('hidden', 'bg-green-600', 'bg-red-600', 'bg-blue-600');
+            if (choice === 'stays') {
+                feedback.innerHTML = "<strong>Correct!</strong> In the equation $MV = PQ$, if $M$ doubles ($2M$) and $V$ halves ($0.5V$), the result is $(2 \times 0.5)MV$, which is just $1MV$. The GDP stays the same. This illustrates how velocity can negate money supply expansion.";
+                feedback.classList.add('bg-green-600');
+            } else {
+                feedback.innerHTML = "<strong>Not quite.</strong> Remember the formula $MV = PQ$. If one side ($M$) goes up but the other factor ($V$) drops proportionally, the total product ($PQ$) remains unchanged. This is often called a 'Liquidity Trap'.";
+                feedback.classList.add('bg-red-600');
+            }
+        }
+
+        // Particle Spawner Loop
+        setInterval(() => {
+            const m = parseFloat(mSlider.value);
+            const v = parseFloat(vSlider.value);
+            // Spawn rate linked to M (count) and V (frequency)
+            const spawnChance = (m * v) / 10;
+            if (Math.random() < spawnChance) {
+                createParticle();
+            }
+        }, 100);
+
+        mSlider.addEventListener('input', updateSimulation);
+        vSlider.addEventListener('input', updateSimulation);
+
+        window.onload = () => {
+            initChart();
+            updateSimulation();
+        };
+    </script>
+</body>
+</html>
