@@ -3,465 +3,610 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HVAC Master Academy: Heat Pump Technology</title>
+    <title>HVAC Master Academy: Pro Technician Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;700&display=swap');
         
+        :root {
+            --high-side: #ef4444;
+            --low-side: #3b82f6;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0f172a;
+            background-color: #020617;
             color: #f8fafc;
         }
 
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
         .cycle-container {
             position: relative;
-            height: 500px;
+            height: 550px;
             width: 100%;
-            background: #1e293b;
-            border-radius: 1rem;
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            border-radius: 1.5rem;
             overflow: hidden;
+            border: 1px solid #334155;
         }
 
-        .component-card {
+        .component-node {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
+            z-index: 20;
         }
 
-        .component-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        .component-node:hover {
+            transform: scale(1.05);
+            filter: brightness(1.2);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
         }
 
         .flow-line {
-            position: absolute;
-            stroke-dasharray: 10;
-            animation: dash 5s linear infinite;
-            transition: stroke 0.5s ease, d 0.5s ease;
+            fill: none;
+            stroke-width: 6;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 12;
+            animation: dash 3s linear infinite;
+            filter: drop-shadow(0 0 2px currentColor);
         }
 
         @keyframes dash {
-            to { stroke-dashoffset: -100; }
+            to { stroke-dashoffset: -120; }
         }
 
-        .hot-gas { stroke: #ef4444; stroke-width: 4; }
-        .hot-liquid { stroke: #f97316; stroke-width: 4; }
-        .cold-liquid { stroke: #3b82f6; stroke-width: 4; }
-        .cold-gas { stroke: #60a5fa; stroke-width: 4; }
+        .hot-gas { stroke: #ef4444; }
+        .hot-liquid { stroke: #f97316; }
+        .cold-liquid { stroke: #06b6d4; }
+        .cold-gas { stroke: #3b82f6; }
+
+        .gauge-container {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid #334155;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #f8fafc;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid #3b82f6;
+        }
 
         .tab-active {
-            border-bottom: 3px solid #3b82f6;
-            color: #3b82f6;
+            background: #3b82f6;
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
 
-        .mode-cool { border-color: #3b82f6; color: #3b82f6; }
-        .mode-heat { border-color: #f97316; color: #f97316; }
+        .led-blink {
+            animation: blink 1s steps(2, start) infinite;
+        }
+
+        @keyframes blink { to { visibility: hidden; } }
+
+        .status-badge {
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-ok { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .status-warn { background: rgba(234, 179, 8, 0.2); color: #eab308; }
+        .status-crit { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-6 min-h-screen">
 
-    <div class="max-w-6xl mx-auto">
-        <!-- Header -->
-        <header class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="max-w-7xl mx-auto">
+        <!-- Navigation Header -->
+        <header class="mb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-slate-800 pb-6">
             <div>
-                <h1 class="text-3xl font-bold text-white tracking-tight">HVAC <span class="text-blue-500">Master Academy</span></h1>
-                <p class="text-slate-400">Unit 2: Heat Pump Reversing Cycles</p>
+                <div class="flex items-center gap-3">
+                    <div class="bg-blue-600 p-2 rounded-lg">
+                        <i class="fas fa-screwdriver-wrench text-white text-xl"></i>
+                    </div>
+                    <h1 class="text-2xl font-black text-white uppercase tracking-widest">HVAC <span class="text-blue-500">Master</span> <span class="text-slate-500 font-light">Academy</span></h1>
+                </div>
+                <p class="text-slate-400 text-sm mt-1">Commercial Refrigeration & Air Conditioning Training System v2.0</p>
             </div>
             
-            <div class="flex flex-wrap items-center gap-4">
-                <!-- Mode Toggle -->
-                <div class="flex items-center bg-slate-800 p-1 rounded-lg border border-slate-700">
-                    <button onclick="setSystemMode('cool')" id="mode-cool-btn" class="px-4 py-2 rounded-md transition-all bg-blue-600 text-white font-bold">COOL</button>
-                    <button onclick="setSystemMode('heat')" id="mode-heat-btn" class="px-4 py-2 rounded-md transition-all text-slate-400">HEAT</button>
-                </div>
-
-                <!-- Navigation -->
-                <div class="flex gap-2 bg-slate-800 p-1 rounded-lg">
-                    <button onclick="switchTab('learn')" id="btn-learn" class="px-4 py-2 rounded-md transition-all tab-active">Learn</button>
-                    <button onclick="switchTab('sim')" id="btn-sim" class="px-4 py-2 rounded-md transition-all">Simulator</button>
-                    <button onclick="switchTab('quiz')" id="btn-quiz" class="px-4 py-2 rounded-md transition-all">Exam</button>
-                </div>
-            </div>
+            <nav class="flex flex-wrap gap-2 bg-slate-900/50 p-1.5 rounded-xl border border-slate-800">
+                <button onclick="setMode('learn')" id="btn-learn" class="px-5 py-2 rounded-lg transition-all text-sm font-semibold tab-active">
+                    <i class="fas fa-book-open mr-2"></i>Curriculum
+                </button>
+                <button onclick="setMode('sim')" id="btn-sim" class="px-5 py-2 rounded-lg transition-all text-sm font-semibold text-slate-400 hover:text-white">
+                    <i class="fas fa-microchip mr-2"></i>Live Simulator
+                </button>
+                <button onclick="setMode('diag')" id="btn-diag" class="px-5 py-2 rounded-lg transition-all text-sm font-semibold text-slate-400 hover:text-white">
+                    <i class="fas fa-stethoscope mr-2"></i>Diagnostics
+                </button>
+                <button onclick="setMode('quiz')" id="btn-quiz" class="px-5 py-2 rounded-lg transition-all text-sm font-semibold text-slate-400 hover:text-white">
+                    <i class="fas fa-graduation-cap mr-2"></i>Certification
+                </button>
+            </nav>
         </header>
 
-        <!-- Main Content Area -->
-        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <main class="grid grid-cols-1 xl:grid-cols-12 gap-6">
             
-            <!-- Left Panel: Interactive Diagram -->
-            <div class="lg:col-span-2 space-y-6">
-                <div class="cycle-container p-4 border border-slate-700 shadow-2xl relative">
-                    <!-- SVG Overlay for Lines -->
-                    <svg class="absolute inset-0 w-full h-full pointer-events-none" id="flow-svg">
-                        <!-- Path segments will be controlled by JavaScript -->
-                        <path id="flow-1" d="" fill="transparent" class="flow-line" />
-                        <path id="flow-2" d="" fill="transparent" class="flow-line" />
-                        <path id="flow-3" d="" fill="transparent" class="flow-line" />
-                        <path id="flow-4" d="" fill="transparent" class="flow-line" />
+            <!-- Left Panel: Interactive Visualizer (8 Cols) -->
+            <div class="xl:col-span-8 space-y-4">
+                <div class="cycle-container relative">
+                    <!-- Dynamic Flow Visualization -->
+                    <svg class="absolute inset-0 w-full h-full pointer-events-none" id="flow-svg" viewBox="0 0 800 550">
+                        <path id="path-1" d="M 600 350 L 600 120 L 520 120" class="flow-line hot-gas" />
+                        <path id="path-2" d="M 280 120 L 150 120 L 150 220" class="flow-line hot-liquid" />
+                        <path id="path-3" d="M 150 330 L 150 430 L 280 430" class="flow-line cold-liquid" />
+                        <path id="path-4" d="M 520 430 L 600 430 L 600 350" class="flow-line cold-gas" />
                     </svg>
 
+                    <div class="absolute top-4 left-6 pointer-events-none">
+                        <div class="flex items-center gap-2 text-xs font-bold text-green-500 uppercase tracking-widest mb-1">
+                            <span class="w-2 h-2 bg-green-500 rounded-full led-blink"></span>
+                            System Operational: R-410A
+                        </div>
+                    </div>
+
                     <!-- Components -->
-                    <!-- Outdoor Coil (Top) -->
-                    <div id="comp-outdoor" onclick="showInfo('outdoor')" class="component-card absolute top-10 left-1/2 -translate-x-1/2 bg-slate-900 border-2 border-blue-500 p-4 rounded-xl w-48 text-center z-10">
-                        <i id="outdoor-icon" class="fas fa-fan text-blue-500 mb-2"></i>
-                        <h3 class="font-bold" id="outdoor-label">Outdoor Coil</h3>
-                        <p class="text-xs text-slate-400" id="outdoor-sub">Evaporator</p>
-                    </div>
-
-                    <!-- Compressor (Right) -->
-                    <div onclick="showInfo('compressor')" class="component-card absolute top-1/2 -translate-y-1/2 right-10 bg-slate-900 border-2 border-slate-500 p-4 rounded-xl w-36 text-center z-10">
-                        <i class="fas fa-compress-arrows-alt text-slate-300 mb-2"></i>
-                        <h3 class="font-bold">Compressor</h3>
-                        <p class="text-xs text-slate-400">Fixed Direction</p>
-                    </div>
-
-                    <!-- TXV / Metering (Left) -->
-                    <div onclick="showInfo('txv')" class="component-card absolute top-1/2 -translate-y-1/2 left-10 bg-slate-900 border-2 border-slate-500 p-4 rounded-xl w-36 text-center z-10">
-                        <i class="fas fa-faucet text-slate-300 mb-2"></i>
-                        <h3 class="font-bold">Bi-Flow TXV</h3>
-                        <p class="text-xs text-slate-400">Metering</p>
-                    </div>
-
-                    <!-- Indoor Coil (Bottom) -->
-                    <div id="comp-indoor" onclick="showInfo('indoor')" class="component-card absolute bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 border-2 border-red-500 p-4 rounded-xl w-48 text-center z-10">
-                        <i id="indoor-icon" class="fas fa-snowflake text-red-500 mb-2"></i>
-                        <h3 class="font-bold" id="indoor-label">Indoor Coil</h3>
-                        <p class="text-xs text-slate-400" id="indoor-sub">Condenser</p>
-                    </div>
-
-                    <!-- Gauges (Overlay during Sim) -->
-                    <div id="sim-gauges" class="hidden absolute top-4 right-4 flex flex-col gap-4">
-                        <div class="bg-red-900/40 p-2 rounded border border-red-500 text-center">
-                            <div class="text-[10px] uppercase">High Side</div>
-                            <div id="high-psi" class="text-xl font-bold">---</div>
+                    <div onclick="inspect('condenser')" class="component-node absolute top-[60px] left-1/2 -translate-x-1/2 w-64 bg-slate-900 border-b-4 border-red-500 p-4 rounded-xl shadow-xl">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-fan text-red-500 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm">Outdoor Condenser</h3>
+                                <p class="text-[10px] text-slate-400 uppercase tracking-tighter">Heat Rejection Phase</p>
+                            </div>
                         </div>
-                        <div class="bg-blue-900/40 p-2 rounded border border-blue-500 text-center">
-                            <div class="text-[10px] uppercase">Low Side</div>
-                            <div id="low-psi" class="text-xl font-bold">---</div>
+                    </div>
+
+                    <div onclick="inspect('compressor')" class="component-node absolute top-1/2 -translate-y-1/2 right-[100px] w-48 bg-slate-900 border-r-4 border-slate-500 p-4 rounded-xl shadow-xl">
+                        <div class="text-center">
+                            <i class="fas fa-bore-hole text-slate-400 text-3xl mb-2"></i>
+                            <h3 class="font-bold text-sm">Scroll Compressor</h3>
+                            <p class="text-[10px] text-slate-500 uppercase">Mechanical Heart</p>
                         </div>
+                    </div>
+
+                    <div onclick="inspect('txv')" class="component-node absolute top-1/2 -translate-y-1/2 left-[50px] w-48 bg-slate-900 border-l-4 border-slate-500 p-4 rounded-xl shadow-xl">
+                        <div class="text-center">
+                            <i class="fas fa-sliders text-slate-400 text-3xl mb-2"></i>
+                            <h3 class="font-bold text-sm">Thermostatic Expansion</h3>
+                            <p class="text-[10px] text-slate-500 uppercase">Pressure Regulation</p>
+                        </div>
+                    </div>
+
+                    <div onclick="inspect('evaporator')" class="component-node absolute bottom-[60px] left-1/2 -translate-x-1/2 w-64 bg-slate-900 border-t-4 border-blue-500 p-4 rounded-xl shadow-xl">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-snowflake text-blue-500 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm">Indoor Evaporator</h3>
+                                <p class="text-[10px] text-slate-400 uppercase tracking-tighter">Heat Absorption Phase</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gauges -->
+                    <div id="sim-gauges" class="hidden absolute top-4 right-4 flex flex-col gap-3 w-40">
+                        <div class="gauge-container p-3 rounded-lg border-l-4 border-red-500">
+                            <label class="text-[10px] text-slate-400 uppercase block font-bold">High Side</label>
+                            <div id="gauge-head" class="text-xl font-bold text-red-400 mono">--</div>
+                            <div id="status-head" class="status-badge mt-1 text-center">NORMAL</div>
+                        </div>
+                        <div class="gauge-container p-3 rounded-lg border-l-4 border-blue-500">
+                            <label class="text-[10px] text-slate-400 uppercase block font-bold">Low Side</label>
+                            <div id="gauge-suction" class="text-xl font-bold text-blue-400 mono">--</div>
+                            <div id="status-suction" class="status-badge mt-1 text-center">NORMAL</div>
+                        </div>
+                    </div>
+
+                    <div class="absolute bottom-4 left-6 right-6 flex justify-between items-center text-[10px] mono text-slate-500">
+                        <div>LATENCY: 12ms</div>
+                        <div id="sys-time">00:00:00</div>
+                        <div>SIGNAL: EXCELLENT</div>
                     </div>
                 </div>
 
-                <!-- Simulation Controls (Dynamic) -->
-                <div id="sim-controls" class="hidden bg-slate-800 p-6 rounded-xl border border-slate-700">
-                    <h3 class="text-xl font-bold mb-4">Live System Tuning</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Ambient Outdoor Temp: <span id="val-outdoor" class="text-slate-400">95°F</span></label>
-                            <input type="range" min="10" max="115" value="95" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500" id="slider-outdoor">
+                <!-- Simulation Sliders -->
+                <div id="sim-controls" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
+                    <div class="space-y-4">
+                        <div class="flex justify-between">
+                            <label class="text-sm font-bold text-red-400 uppercase">Outdoor Ambient Temp</label>
+                            <span id="label-outdoor" class="mono text-red-400">95°F</span>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Indoor Setpoint: <span id="val-indoor" class="text-slate-400">75°F</span></label>
-                            <input type="range" min="60" max="90" value="75" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500" id="slider-indoor">
+                        <input type="range" id="input-outdoor" min="60" max="115" value="95" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none accent-red-500">
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex justify-between">
+                            <label class="text-sm font-bold text-blue-400 uppercase">Indoor Return Air</label>
+                            <span id="label-indoor" class="mono text-blue-400">75°F</span>
                         </div>
+                        <input type="range" id="input-indoor" min="60" max="90" value="75" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none accent-blue-500">
                     </div>
                 </div>
             </div>
 
-            <!-- Right Panel: Lesson Content / Details -->
-            <div id="info-panel" class="bg-slate-800 p-6 rounded-xl border border-slate-700 h-fit">
-                <div id="info-content">
-                    <h2 class="text-2xl font-bold text-blue-400 mb-4">Reversing Valve Active</h2>
-                    <p class="text-slate-300 mb-4">
-                        A Heat Pump uses a 4-way reversing valve to flip the flow of refrigerant. This allows the system to pull heat from the outside air and "pump" it indoors.
-                    </p>
-                    <div class="bg-slate-700/50 p-4 rounded-lg mb-4">
-                        <h4 class="font-bold text-white mb-2 underline">System Overview:</h4>
-                        <p class="text-sm text-slate-300" id="system-status-text">In Cooling mode, the indoor coil absorbs heat. In Heating mode, the roles switch!</p>
+            <!-- Right Panel -->
+            <div class="xl:col-span-4 flex flex-col gap-6">
+                <div id="hub-card" class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden flex-grow flex flex-col">
+                    <div id="hub-header" class="bg-slate-800 p-4 border-b border-slate-700 flex justify-between items-center">
+                        <h2 id="hub-title" class="font-bold text-white uppercase tracking-wider">Lesson 01: The Basics</h2>
+                        <i id="hub-icon" class="fas fa-info-circle text-blue-400"></i>
                     </div>
-                    <p class="text-sm text-slate-400 italic">Toggle the COOL/HEAT switch above to see the flow change, then click components for details.</p>
+
+                    <div id="hub-body" class="p-6 overflow-y-auto">
+                        <div id="content-learn" class="space-y-4">
+                            <!-- Populated by JS -->
+                        </div>
+
+                        <div id="content-sim" class="hidden space-y-4">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                                    <label class="text-[10px] text-slate-500 font-bold uppercase block mb-1">Subcooling</label>
+                                    <div id="val-sc" class="text-xl font-bold text-red-400 mono">--</div>
+                                    <div class="text-[10px] text-slate-400 mt-1">Normal: 8-12°F</div>
+                                </div>
+                                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                                    <label class="text-[10px] text-slate-500 font-bold uppercase block mb-1">Superheat</label>
+                                    <div id="val-sh" class="text-xl font-bold text-blue-400 mono">--</div>
+                                    <div class="text-[10px] text-slate-400 mt-1">Normal: 8-15°F</div>
+                                </div>
+                            </div>
+                            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                                <label class="text-[10px] text-slate-500 font-bold uppercase block mb-1">Amperage Draw</label>
+                                <div id="val-amps" class="text-xl font-bold text-white mono">--</div>
+                            </div>
+                            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                                <label class="text-[10px] text-slate-500 font-bold uppercase block mb-1">Compression Ratio</label>
+                                <div id="val-ratio" class="text-xl font-bold text-white mono">--</div>
+                            </div>
+                        </div>
+
+                        <div id="content-diag" class="hidden space-y-4">
+                            <div id="diag-status" class="bg-yellow-500/10 p-4 rounded-xl border border-yellow-500/20 text-yellow-500 text-sm font-medium">
+                                <i class="fas fa-triangle-exclamation mr-2"></i> SYSTEM FAULT DETECTED
+                            </div>
+                            <p class="text-sm text-slate-300">Observe the gauges and line temperatures. What is wrong with this system?</p>
+                            <div id="diag-options" class="space-y-2"></div>
+                        </div>
+
+                        <div id="content-quiz" class="hidden space-y-4">
+                            <div id="quiz-question" class="text-sm font-bold text-white leading-relaxed"></div>
+                            <div id="quiz-options" class="space-y-2"></div>
+                            <div id="quiz-feedback" class="p-3 rounded-lg text-xs hidden"></div>
+                        </div>
+                    </div>
+
+                    <div id="hub-footer" class="mt-auto p-4 border-t border-slate-800 text-[10px] text-slate-500 flex justify-between">
+                        <span>MOD: FLASH_EVAP_CYCLE</span>
+                        <span>UID: TECH_9921_ALPHA</span>
+                    </div>
                 </div>
 
-                <!-- Quiz Container (Hidden initially) -->
-                <div id="quiz-content" class="hidden">
-                    <h2 class="text-2xl font-bold text-yellow-500 mb-4">Mastery Exam</h2>
-                    <div id="question-box">
-                        <!-- Questions injected by JS -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 h-32 overflow-hidden">
+                    <h4 class="text-[10px] font-black text-slate-500 uppercase mb-2">Live Console Logs</h4>
+                    <div id="console-logs" class="mono text-[10px] space-y-1 text-slate-400">
+                        <div class="text-blue-500">> System Booting... OK</div>
+                        <div class="text-green-500">> Sensors Calibrated... OK</div>
                     </div>
-                    <div id="quiz-feedback" class="mt-4 p-3 rounded hidden"></div>
                 </div>
             </div>
         </main>
+    </div>
 
-        <footer class="mt-12 pt-8 border-t border-slate-800 text-center text-slate-500 text-xs">
-            &copy; 2026 HVAC Master Academy | Created for Professional Technical Education
-        </footer>
+    <div id="toast" class="fixed bottom-6 right-6 bg-blue-600 text-white px-4 py-3 rounded-xl shadow-2xl transition-all translate-y-20 opacity-0 pointer-events-none z-50">
+        <span id="toast-msg">Item Saved</span>
     </div>
 
     <script>
-        let systemMode = 'cool'; // 'cool' or 'heat'
-        let currentTab = 'learn';
+        let currentMode = 'learn';
+        let faultActive = null;
+        let outdoorTemp = 95;
+        let indoorTemp = 75;
+        let currentQuizIdx = 0;
 
-        const componentData = {
+        const components = {
             compressor: {
-                title: "The Compressor",
-                icon: "fa-compress-arrows-alt",
-                color: "text-slate-300",
-                desc: "Regardless of mode, the compressor always moves refrigerant in one direction: suction in, discharge out. The reversing valve handles the path change.",
-                points: ["The workhorse of the system", "Always produces high-pressure discharge gas", "Power consumption increases as pressure ratios rise"],
-                state: "Always: Low Pressure Vapor → High Pressure Vapor"
+                id: 'compressor',
+                title: "Scroll Compressor",
+                desc: "The pump that circulates refrigerant. It increases both pressure and temperature.",
+                bullets: ["Raises Pressure", "Raises Temperature", "Moves volume", "Vapor Only"],
+                icon: "fa-bore-hole"
+            },
+            condenser: {
+                id: 'condenser',
+                title: "Condenser Coil",
+                desc: "Removes energy from hot gas. Refrigerant changes from gas to high-pressure liquid.",
+                bullets: ["De-superheats gas", "Condenses to liquid", "Subcools liquid", "Airflow dependent"],
+                icon: "fa-fan"
             },
             txv: {
-                title: "Bi-Flow Metering",
-                icon: "fa-faucet",
-                color: "text-slate-300",
-                desc: "In heat pumps, the metering device must be able to handle flow in both directions or use a bypass check valve system.",
-                points: ["Drops pressure to allow phase change", "Controls superheat for efficiency", "Critical for system balance in both modes"],
-                state: "Always: High Pressure Liquid → Low Pressure Mix"
+                id: 'txv',
+                title: "Expansion Valve",
+                desc: "The gatekeeper. Creates a massive pressure drop, cooling the refrigerant instantly.",
+                bullets: ["Creates pressure drop", "Maintains Superheat", "Modulates flow", "Boundary"],
+                icon: "fa-sliders"
             },
-            outdoor: {
-                cool: {
-                    title: "Outdoor Coil (Condenser)",
-                    icon: "fa-fan",
-                    color: "text-red-500",
-                    desc: "Rejects heat to the outdoor environment. Hot gas from the compressor enters here and turns into liquid.",
-                    points: ["Rejects heat gathered indoors", "Fan pulls air through fins", "Refrigerant exits as subcooled liquid"],
-                    state: "Cooling: High Pressure Vapor → High Pressure Liquid"
-                },
-                heat: {
-                    title: "Outdoor Coil (Evaporator)",
-                    icon: "fa-snowflake",
-                    color: "text-blue-500",
-                    desc: "Absorbs heat from the cold outdoor air. Even at 30°F, there is thermal energy the refrigerant can pick up.",
-                    points: ["Absorbs heat from outside", "Refrigerant boils at low temp", "May require a defrost cycle if it freezes"],
-                    state: "Heating: Low Pressure Liquid → Low Pressure Vapor"
-                }
-            },
-            indoor: {
-                cool: {
-                    title: "Indoor Coil (Evaporator)",
-                    icon: "fa-snowflake",
-                    color: "text-blue-500",
-                    desc: "Absorbs heat from the house. Cold refrigerant picks up heat from your return air.",
-                    points: ["Removes heat and humidity", "Blowers push air over cold fins", "Liquid boils into gas"],
-                    state: "Cooling: Low Pressure Liquid → Low Pressure Vapor"
-                },
-                heat: {
-                    title: "Indoor Coil (Condenser)",
-                    icon: "fa-fire",
-                    color: "text-red-500",
-                    desc: "Rejects heat into the house. The hot gas from the compressor comes here first to warm your home.",
-                    points: ["Pumps heat into the home", "Acts as the condenser in this mode", "Refrigerant exits as high-pressure liquid"],
-                    state: "Heating: High Pressure Vapor → High Pressure Liquid"
-                }
+            evaporator: {
+                id: 'evaporator',
+                title: "Evaporator Coil",
+                desc: "Where cooling happens. Cold liquid boils into vapor as it absorbs heat.",
+                bullets: ["Absorbs heat", "Boils refrigerant", "Dehumidifies", "Vaporizes liquid"],
+                icon: "fa-snowflake"
             }
         };
 
-        const questions = [
-            {
-                q: "In HEATING mode, which coil acts as the Condenser?",
-                a: ["Outdoor Coil", "Indoor Coil", "Both Coils", "Neither"],
-                correct: 1
-            },
-            {
-                q: "What is the primary component that allows a Heat Pump to switch between Cooling and Heating?",
-                a: ["The Compressor", "The Bi-Flow TXV", "The Reversing Valve", "The Thermostat"],
-                correct: 2
-            },
-            {
-                q: "True or False: In Heating mode, the outdoor coil is colder than the outdoor air.",
-                a: ["True - so it can absorb heat", "False - it must be hotter"],
-                correct: 0
-            }
+        const cycleOrder = ['compressor', 'condenser', 'txv', 'evaporator'];
+
+        const faults = [
+            { id: 'dirty-filter', name: "Dirty Filter", headMod: -20, suctionMod: -25, shMod: -5, scMod: -2 },
+            { id: 'low-charge', name: "Low Charge", headMod: -60, suctionMod: -40, shMod: +15, scMod: -8 },
+            { id: 'dirty-condenser', name: "Dirty Condenser", headMod: +80, suctionMod: +5, shMod: 0, scMod: +10 }
         ];
 
-        let currentQuestion = 0;
+        const questions = [
+            { q: "Refrigerant enters the Compressor as what?", opts: ["High Pressure Liquid", "Low Pressure Vapor", "High Pressure Vapor", "Low Pressure Liquid"], correct: 1 },
+            { q: "Where does the refrigerant give up its latent heat?", opts: ["Compressor", "Evaporator", "Condenser", "Liquid Line"], correct: 2 }
+        ];
 
-        function setSystemMode(mode) {
-            systemMode = mode;
+        window.onload = () => {
+            setMode('learn');
+            updateTime();
+            setInterval(updateTime, 1000);
+            log("System Online: Welcome Technician.");
+        };
+
+        function setMode(mode) {
+            currentMode = mode;
+            faultActive = null;
             
-            // Update Toggle UI
-            const coolBtn = document.getElementById('mode-cool-btn');
-            const heatBtn = document.getElementById('mode-heat-btn');
+            // UI Navigation
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('tab-active', 'text-white'));
+            document.getElementById(`btn-${mode}`).classList.add('tab-active');
             
-            if (mode === 'cool') {
-                coolBtn.className = "px-4 py-2 rounded-md transition-all bg-blue-600 text-white font-bold";
-                heatBtn.className = "px-4 py-2 rounded-md transition-all text-slate-400";
-                document.getElementById('system-status-text').innerText = "In Cooling mode, the indoor coil absorbs heat and the outdoor coil rejects it.";
+            // Content Visibility
+            ['learn', 'sim', 'diag', 'quiz'].forEach(p => document.getElementById(`content-${p}`).classList.add('hidden'));
+            document.getElementById(`content-${mode}`).classList.remove('hidden');
+            
+            // Panel Specific Logic
+            const gauges = document.getElementById('sim-gauges');
+            const ctrls = document.getElementById('sim-controls');
+            
+            if (mode === 'sim' || mode === 'diag') {
+                gauges.classList.remove('hidden');
+                ctrls.classList.remove('hidden');
+                updateSimUI();
+                if (mode === 'diag') initDiagnostic();
             } else {
-                heatBtn.className = "px-4 py-2 rounded-md transition-all bg-orange-600 text-white font-bold";
-                coolBtn.className = "px-4 py-2 rounded-md transition-all text-slate-400";
-                document.getElementById('system-status-text').innerText = "In Heating mode, the indoor coil rejects heat into the home, acting as a condenser.";
+                gauges.classList.add('hidden');
+                ctrls.classList.add('hidden');
             }
 
-            updateVisuals();
-            if (currentTab === 'sim') updateSimulation();
+            if (mode === 'learn') resetBasics();
+            if (mode === 'quiz') initQuiz();
+
+            const titles = { learn: 'Lesson 01: The Basics', sim: 'Real-Time Telemetry', diag: 'Troubleshooting', quiz: 'Exam Mode' };
+            document.getElementById('hub-title').innerText = titles[mode];
+            log(`Mode: ${mode.toUpperCase()}`);
         }
 
-        function updateVisuals() {
-            const outdoor = document.getElementById('comp-outdoor');
-            const indoor = document.getElementById('comp-indoor');
-            const outdoorIcon = document.getElementById('outdoor-icon');
-            const indoorIcon = document.getElementById('indoor-icon');
-
-            if (systemMode === 'cool') {
-                // Outdoor is Condenser (Red)
-                outdoor.className = "component-card absolute top-10 left-1/2 -translate-x-1/2 bg-slate-900 border-2 border-red-500 p-4 rounded-xl w-48 text-center z-10";
-                outdoorIcon.className = "fas fa-fan text-red-500 mb-2";
-                document.getElementById('outdoor-sub').innerText = "Condenser";
-                
-                // Indoor is Evaporator (Blue)
-                indoor.className = "component-card absolute bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 border-2 border-blue-500 p-4 rounded-xl w-48 text-center z-10";
-                indoorIcon.className = "fas fa-snowflake text-blue-500 mb-2";
-                document.getElementById('indoor-sub').innerText = "Evaporator";
-
-                // Cooling Paths
-                setPath('flow-1', "M 450 350 L 450 100 L 400 100", 'hot-gas'); // Comp to Outdoor
-                setPath('flow-2', "M 200 100 L 150 100 L 150 200", 'hot-liquid'); // Outdoor to TXV
-                setPath('flow-3', "M 150 300 L 150 400 L 200 400", 'cold-liquid'); // TXV to Indoor
-                setPath('flow-4', "M 400 400 L 450 400 L 450 350", 'cold-gas'); // Indoor to Comp
-            } else {
-                // Outdoor is Evaporator (Blue)
-                outdoor.className = "component-card absolute top-10 left-1/2 -translate-x-1/2 bg-slate-900 border-2 border-blue-500 p-4 rounded-xl w-48 text-center z-10";
-                outdoorIcon.className = "fas fa-fan text-blue-500 mb-2";
-                document.getElementById('outdoor-sub').innerText = "Evaporator";
-
-                // Indoor is Condenser (Red)
-                indoor.className = "component-card absolute bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 border-2 border-red-500 p-4 rounded-xl w-48 text-center z-10";
-                indoorIcon.className = "fas fa-fire text-red-500 mb-2";
-                document.getElementById('indoor-sub').innerText = "Condenser";
-
-                // Heating Paths (Reversed)
-                setPath('flow-1', "M 450 350 L 450 400 L 400 400", 'hot-gas'); // Comp to Indoor
-                setPath('flow-2', "M 200 400 L 150 400 L 150 300", 'hot-liquid'); // Indoor to TXV
-                setPath('flow-3', "M 150 200 L 150 100 L 200 100", 'cold-liquid'); // TXV to Outdoor
-                setPath('flow-4', "M 400 100 L 450 100 L 450 350", 'cold-gas'); // Outdoor to Comp
-            }
-        }
-
-        function setPath(id, d, className) {
-            const path = document.getElementById(id);
-            path.setAttribute('d', d);
-            path.className.baseVal = "flow-line " + className;
-        }
-
-        function showInfo(id) {
-            let data;
-            if (id === 'outdoor' || id === 'indoor') {
-                data = componentData[id][systemMode];
-            } else {
-                data = componentData[id];
-            }
-
-            const html = `
-                <div class="animate-in fade-in duration-500">
-                    <div class="flex items-center gap-3 mb-4">
-                        <i class="fas ${data.icon} ${data.color} text-3xl"></i>
-                        <h2 class="text-2xl font-bold">${data.title}</h2>
+        function resetBasics() {
+            const hubBody = document.getElementById('content-learn');
+            hubBody.innerHTML = `
+                <div class="animate-in fade-in duration-500 space-y-4">
+                    <p class="text-slate-300 text-sm leading-relaxed">
+                        The mechanical refrigeration cycle follows the laws of thermodynamics: heat moves from warmer objects to cooler ones.
+                    </p>
+                    <div class="p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
+                        <h4 class="text-xs font-black text-blue-400 uppercase mb-2">Key Principle</h4>
+                        <p class="text-sm italic">"By changing refrigerant pressure, we control its boiling point. Lower pressure = colder liquid."</p>
                     </div>
-                    <div class="bg-blue-500/10 border border-blue-500/30 p-3 rounded mb-4">
-                        <span class="text-xs uppercase font-bold text-blue-400">Current Process:</span>
-                        <p class="text-sm font-semibold">${data.state}</p>
+                    <div class="space-y-3 pt-2">
+                        <p class="text-xs text-slate-500 uppercase font-bold">Select a component to begin:</p>
+                        <button onclick="inspect('compressor')" class="w-full text-left p-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors group">
+                            <span class="text-blue-500 font-bold mr-2">01</span> The Compressor
+                        </button>
+                        <button onclick="inspect('condenser')" class="w-full text-left p-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors group">
+                            <span class="text-blue-500 font-bold mr-2">02</span> The Condenser
+                        </button>
+                        <button onclick="inspect('txv')" class="w-full text-left p-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors group">
+                            <span class="text-blue-500 font-bold mr-2">03</span> Expansion Valve
+                        </button>
+                        <button onclick="inspect('evaporator')" class="w-full text-left p-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors group">
+                            <span class="text-blue-500 font-bold mr-2">04</span> The Evaporator
+                        </button>
                     </div>
-                    <p class="text-slate-300 mb-6">${data.desc}</p>
-                    <ul class="space-y-3">
-                        ${data.points.map(p => `<li class="flex items-start gap-2 text-sm"><i class="fas fa-chevron-right text-blue-500 mt-1"></i> ${p}</li>`).join('')}
-                    </ul>
                 </div>
             `;
-            document.getElementById('info-content').innerHTML = html;
         }
 
-        function switchTab(tab) {
-            currentTab = tab;
-            document.getElementById('btn-learn').classList.remove('tab-active');
-            document.getElementById('btn-sim').classList.remove('tab-active');
-            document.getElementById('btn-quiz').classList.remove('tab-active');
-            document.getElementById('btn-' + tab).classList.add('tab-active');
-
-            const infoPanel = document.getElementById('info-content');
-            const quizPanel = document.getElementById('quiz-content');
-            const simControls = document.getElementById('sim-controls');
-            const simGauges = document.getElementById('sim-gauges');
-
-            if (tab === 'learn') {
-                infoPanel.classList.remove('hidden');
-                quizPanel.classList.add('hidden');
-                simControls.classList.add('hidden');
-                simGauges.classList.add('hidden');
-            } else if (tab === 'sim') {
-                infoPanel.classList.remove('hidden');
-                quizPanel.classList.add('hidden');
-                simControls.classList.remove('hidden');
-                simGauges.classList.remove('hidden');
-                updateSimulation();
-            } else {
-                infoPanel.classList.add('hidden');
-                quizPanel.classList.remove('hidden');
-                simControls.classList.add('hidden');
-                simGauges.classList.add('hidden');
-                loadQuestion();
-            }
-        }
-
-        function updateSimulation() {
-            const outdoor = parseInt(document.getElementById('slider-outdoor').value);
-            const indoor = parseInt(document.getElementById('slider-indoor').value);
-
-            document.getElementById('val-outdoor').innerText = outdoor + '°F';
-            document.getElementById('val-indoor').innerText = indoor + '°F';
-
-            let highPsi, lowPsi;
-
-            if (systemMode === 'cool') {
-                highPsi = Math.round(outdoor * 3.5 + 40);
-                lowPsi = Math.round(indoor * 1.5 - 45);
-            } else {
-                // In heating, indoor is high side, outdoor is low side
-                highPsi = Math.round(indoor * 4.2 + 10);
-                lowPsi = Math.round(outdoor * 1.2 + 20);
-            }
-
-            document.getElementById('high-psi').innerText = highPsi + ' PSI';
-            document.getElementById('low-psi').innerText = lowPsi + ' PSI';
-
-            const speed = 10 - (highPsi / 100);
-            document.querySelectorAll('.flow-line').forEach(el => {
-                el.style.animationDuration = Math.max(0.5, speed) + 's';
-            });
-        }
-
-        function checkAnswer(idx) {
-            const feedback = document.getElementById('quiz-feedback');
-            feedback.classList.remove('hidden', 'bg-red-500/20', 'bg-green-500/20', 'text-red-400', 'text-green-400');
+        function inspect(id) {
+            setMode('learn');
             
-            if (idx === questions[currentQuestion].correct) {
-                feedback.innerText = "Correct! You understand the heat pump cycle.";
-                feedback.classList.add('bg-green-500/20', 'text-green-400');
-                
-                setTimeout(() => {
-                    currentQuestion++;
-                    if (currentQuestion < questions.length) {
-                        loadQuestion();
-                        feedback.classList.add('hidden');
-                    } else {
-                        document.getElementById('question-box').innerHTML = "<h3 class='text-xl font-bold text-center p-8'>Heat Pump Master Certification Achieved!<br><span class='text-green-500'>You're ready for the field.</span></h3>";
-                        feedback.classList.add('hidden');
-                    }
-                }, 2000);
-            } else {
-                feedback.innerText = "Incorrect. Review the reversing valve logic.";
-                feedback.classList.add('bg-red-500/20', 'text-red-400');
+            const data = components[id];
+            const currentIndex = cycleOrder.indexOf(id);
+            const prevId = currentIndex > 0 ? cycleOrder[currentIndex - 1] : null;
+            const nextId = currentIndex < cycleOrder.length - 1 ? cycleOrder[currentIndex + 1] : null;
+
+            const hubBody = document.getElementById('content-learn');
+            hubBody.innerHTML = `
+                <div class="animate-in slide-in-from-right duration-300">
+                    <button onclick="resetBasics()" class="text-[10px] text-blue-400 uppercase mb-4 hover:underline">
+                        <i class="fas fa-arrow-left mr-1"></i> Back to Menu
+                    </button>
+                    
+                    <div class="flex items-center gap-3 mb-4">
+                        <i class="fas ${data.icon} text-blue-500 text-2xl"></i>
+                        <h3 class="font-bold text-lg text-white">${data.title}</h3>
+                    </div>
+                    <p class="text-sm text-slate-300 mb-4 leading-relaxed">${data.desc}</p>
+                    <div class="space-y-2 mb-6">
+                        ${data.bullets.map(b => `<li class="text-xs flex items-center gap-2 text-slate-400"><i class="fas fa-check text-blue-600"></i> ${b}</li>`).join('')}
+                    </div>
+
+                    <!-- Sequential Navigation -->
+                    <div class="grid grid-cols-2 gap-3 mt-8 border-t border-slate-800 pt-6">
+                        ${prevId ? `
+                            <button onclick="inspect('${prevId}')" class="flex flex-col items-start p-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-all group">
+                                <span class="text-[10px] text-slate-500 uppercase font-bold">Previous</span>
+                                <span class="text-xs font-semibold text-white group-hover:text-blue-400 truncate w-full">${components[prevId].title}</span>
+                            </button>
+                        ` : `<div></div>`}
+                        
+                        ${nextId ? `
+                            <button onclick="inspect('${nextId}')" class="flex flex-col items-end p-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-all group">
+                                <span class="text-[10px] text-slate-500 uppercase font-bold text-right">Next</span>
+                                <span class="text-xs font-semibold text-white group-hover:text-blue-400 truncate w-full text-right">${components[nextId].title}</span>
+                            </button>
+                        ` : `
+                            <button onclick="setMode('sim')" class="flex flex-col items-end p-3 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 transition-all group">
+                                <span class="text-[10px] text-blue-400 uppercase font-bold">End Lesson</span>
+                                <span class="text-xs font-semibold text-white">Go to Simulator</span>
+                            </button>
+                        `}
+                    </div>
+                </div>
+            `;
+            log(`Inspected: ${data.title}`);
+        }
+
+        function updateSimUI() {
+            outdoorTemp = parseInt(document.getElementById('input-outdoor').value);
+            indoorTemp = parseInt(document.getElementById('input-indoor').value);
+            document.getElementById('label-outdoor').innerText = outdoorTemp + '°F';
+            document.getElementById('label-indoor').innerText = indoorTemp + '°F';
+
+            let headPsi = (outdoorTemp + 28) * 3.35; 
+            let suctionPsi = (indoorTemp - 32) * 2.6;
+            let sh = 10 + (indoorTemp - 75) * 0.4 - (outdoorTemp - 95) * 0.1;
+            let sc = 11 + (outdoorTemp - 95) * 0.25;
+            let amps = 8.5 + (outdoorTemp - 70) * 0.15;
+
+            if (faultActive) {
+                headPsi += faultActive.headMod;
+                suctionPsi += faultActive.suctionMod;
+                sh += faultActive.shMod;
+                sc += faultActive.scMod;
+                amps += (faultActive.headMod > 0 ? 3.5 : -1.5);
             }
+
+            document.getElementById('gauge-head').innerText = headPsi.toFixed(1) + ' PSI';
+            document.getElementById('gauge-suction').innerText = suctionPsi.toFixed(1) + ' PSI';
+            document.getElementById('val-sh').innerText = sh.toFixed(1) + '°F';
+            document.getElementById('val-sc').innerText = sc.toFixed(1) + '°F';
+            document.getElementById('val-amps').innerText = amps.toFixed(1) + ' AMPS';
+            document.getElementById('val-ratio').innerText = ((headPsi + 14.7) / (suctionPsi + 14.7)).toFixed(2) + ' : 1';
+
+            updateStatus('status-head', headPsi, 280, 430);
+            updateStatus('status-suction', suctionPsi, 100, 150);
+            
+            const speed = Math.max(0.3, 4 - (headPsi/180));
+            document.querySelectorAll('.flow-line').forEach(el => el.style.animationDuration = speed + 's');
+        }
+
+        function updateStatus(id, val, min, max) {
+            const el = document.getElementById(id);
+            if (val < min || val > max) {
+                el.innerText = val < min ? "LOW" : "HIGH";
+                el.className = "status-badge mt-1 text-center status-crit";
+            } else {
+                el.innerText = "NORMAL";
+                el.className = "status-badge mt-1 text-center status-ok";
+            }
+        }
+
+        function initDiagnostic() {
+            faultActive = faults[Math.floor(Math.random() * faults.length)];
+            const optBox = document.getElementById('diag-options');
+            optBox.innerHTML = '';
+            faults.forEach(f => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs transition-all";
+                btn.innerText = f.name;
+                btn.onclick = () => checkDiagnostic(f.id);
+                optBox.appendChild(btn);
+            });
+            updateSimUI();
+        }
+
+        function checkDiagnostic(id) {
+            if (id === faultActive.id) {
+                showToast("CORRECT: Problem Identified!", "bg-green-600");
+                setTimeout(() => setMode('sim'), 2000);
+            } else {
+                showToast("INCORRECT: Check telemetry.", "bg-red-600");
+            }
+        }
+
+        function initQuiz() {
+            currentQuizIdx = 0;
+            loadQuestion();
         }
 
         function loadQuestion() {
-            const q = questions[currentQuestion];
-            let html = `
-                <p class="mb-4 font-medium">${q.q}</p>
-                <div class="space-y-2">
-                    ${q.a.map((opt, i) => `<button onclick="checkAnswer(${i})" class="w-full text-left p-3 rounded bg-slate-700 hover:bg-slate-600 border border-slate-600 transition-colors">${String.fromCharCode(65+i)}) ${opt}</button>`).join('')}
-                </div>
-            `;
-            document.getElementById('question-box').innerHTML = html;
+            const q = questions[currentQuizIdx];
+            document.getElementById('quiz-question').innerText = `Question ${currentQuizIdx+1}: ${q.q}`;
+            const optBox = document.getElementById('quiz-options');
+            optBox.innerHTML = '';
+            q.opts.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs";
+                btn.innerText = `${String.fromCharCode(65+i)}) ${opt}`;
+                btn.onclick = () => submitAnswer(i);
+                optBox.appendChild(btn);
+            });
         }
 
-        document.getElementById('slider-outdoor').addEventListener('input', updateSimulation);
-        document.getElementById('slider-indoor').addEventListener('input', updateSimulation);
+        function submitAnswer(idx) {
+            const fb = document.getElementById('quiz-feedback');
+            fb.classList.remove('hidden');
+            if (idx === questions[currentQuizIdx].correct) {
+                fb.innerText = "Correct!";
+                fb.className = "p-3 rounded-lg text-xs bg-green-500/20 text-green-400 block";
+                currentQuizIdx++;
+                setTimeout(() => {
+                    if (currentQuizIdx < questions.length) loadQuestion();
+                    else document.getElementById('content-quiz').innerHTML = "<div class='text-center py-8'><h3 class='text-xl font-bold'>CERTIFIED!</h3><button onclick='setMode(\"learn\")' class='mt-6 px-4 py-2 bg-slate-800 rounded-lg text-xs'>Home</button></div>";
+                    fb.classList.add('hidden');
+                }, 1000);
+            } else {
+                fb.innerText = "Try again!";
+                fb.className = "p-3 rounded-lg text-xs bg-red-500/20 text-red-400 block";
+            }
+        }
 
-        window.onload = () => {
-            updateVisuals();
-        };
+        function log(msg) {
+            const logBox = document.getElementById('console-logs');
+            const entry = document.createElement('div');
+            entry.innerText = `> ${msg}`;
+            logBox.prepend(entry);
+            if (logBox.children.length > 5) logBox.lastChild.remove();
+        }
+
+        function showToast(msg, color) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            t.className = `fixed bottom-6 right-6 ${color} text-white px-4 py-3 rounded-xl shadow-2xl transition-all z-50 opacity-100 translate-y-0`;
+            setTimeout(() => t.classList.add('opacity-0', 'translate-y-20'), 3000);
+        }
+
+        function updateTime() {
+            document.getElementById('sys-time').innerText = new Date().toLocaleTimeString();
+        }
+
+        document.getElementById('input-outdoor').oninput = updateSimUI;
+        document.getElementById('input-indoor').oninput = updateSimUI;
     </script>
 </body>
 </html>
