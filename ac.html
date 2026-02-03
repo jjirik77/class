@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HVAC Master Academy: Heat Pump Technology</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+
+        .cycle-container {
+            position: relative;
+            height: 500px;
+            width: 100%;
+            background: #1e293b;
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+
+        .component-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .component-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .flow-line {
+            position: absolute;
+            stroke-dasharray: 10;
+            animation: dash 5s linear infinite;
+            transition: stroke 0.5s ease, d 0.5s ease;
+        }
+
+        @keyframes dash {
+            to { stroke-dashoffset: -100; }
+        }
+
+        .hot-gas { stroke: #ef4444; stroke-width: 4; }
+        .hot-liquid { stroke: #f97316; stroke-width: 4; }
+        .cold-liquid { stroke: #3b82f6; stroke-width: 4; }
+        .cold-gas { stroke: #60a5fa; stroke-width: 4; }
+
+        .tab-active {
+            border-bottom: 3px solid #3b82f6;
+            color: #3b82f6;
+        }
+
+        .mode-cool { border-color: #3b82f6; color: #3b82f6; }
+        .mode-heat { border-color: #f97316; color: #f97316; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-white tracking-tight">HVAC <span class="text-blue-500">Master Academy</span></h1>
+                <p class="text-slate-400">Unit 2: Heat Pump Reversing Cycles</p>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-4">
+                <!-- Mode Toggle -->
+                <div class="flex items-center bg-slate-800 p-1 rounded-lg border border-slate-700">
+                    <button onclick="setSystemMode('cool')" id="mode-cool-btn" class="px-4 py-2 rounded-md transition-all bg-blue-600 text-white font-bold">COOL</button>
+                    <button onclick="setSystemMode('heat')" id="mode-heat-btn" class="px-4 py-2 rounded-md transition-all text-slate-400">HEAT</button>
+                </div>
+
+                <!-- Navigation -->
+                <div class="flex gap-2 bg-slate-800 p-1 rounded-lg">
+                    <button onclick="switchTab('learn')" id="btn-learn" class="px-4 py-2 rounded-md transition-all tab-active">Learn</button>
+                    <button onclick="switchTab('sim')" id="btn-sim" class="px-4 py-2 rounded-md transition-all">Simulator</button>
+                    <button onclick="switchTab('quiz')" id="btn-quiz" class="px-4 py-2 rounded-md transition-all">Exam</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Left Panel: Interactive Diagram -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="cycle-container p-4 border border-slate-700 shadow-2xl relative">
+                    <!-- SVG Overlay for Lines -->
+                    <svg class="absolute inset-0 w-full h-full pointer-events-none" id="flow-svg">
+                        <!-- Path segments will be controlled by JavaScript -->
+                        <path id="flow-1" d="" fill="transparent" class="flow-line" />
+                        <path id="flow-2" d="" fill="transparent" class="flow-line" />
+                        <path id="flow-3" d="" fill="transparent" class="flow-line" />
+                        <path id="flow-4" d="" fill="transparent" class="flow-line" />
+                    </svg>
+
+                    <!-- Components -->
+                    <!-- Outdoor Coil (Top) -->
+                    <div id="comp-outdoor" onclick="showInfo('outdoor')" class="component-card absolute top-10 left-1/2 -translate-x-1/2 bg-slate-900 border-2 border-blue-500 p-4 rounded-xl w-48 text-center z-10">
+                        <i id="outdoor-icon" class="fas fa-fan text-blue-500 mb-2"></i>
+                        <h3 class="font-bold" id="outdoor-label">Outdoor Coil</h3>
+                        <p class="text-xs text-slate-400" id="outdoor-sub">Evaporator</p>
+                    </div>
+
+                    <!-- Compressor (Right) -->
+                    <div onclick="showInfo('compressor')" class="component-card absolute top-1/2 -translate-y-1/2 right-10 bg-slate-900 border-2 border-slate-500 p-4 rounded-xl w-36 text-center z-10">
+                        <i class="fas fa-compress-arrows-alt text-slate-300 mb-2"></i>
+                        <h3 class="font-bold">Compressor</h3>
+                        <p class="text-xs text-slate-400">Fixed Direction</p>
+                    </div>
+
+                    <!-- TXV / Metering (Left) -->
+                    <div onclick="showInfo('txv')" class="component-card absolute top-1/2 -translate-y-1/2 left-10 bg-slate-900 border-2 border-slate-500 p-4 rounded-xl w-36 text-center z-10">
+                        <i class="fas fa-faucet text-slate-300 mb-2"></i>
+                        <h3 class="font-bold">Bi-Flow TXV</h3>
+                        <p class="text-xs text-slate-400">Metering</p>
+                    </div>
+
+                    <!-- Indoor Coil (Bottom) -->
+                    <div id="comp-indoor" onclick="showInfo('indoor')" class="component-card absolute bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 border-2 border-red-500 p-4 rounded-xl w-48 text-center z-10">
+                        <i id="indoor-icon" class="fas fa-snowflake text-red-500 mb-2"></i>
+                        <h3 class="font-bold" id="indoor-label">Indoor Coil</h3>
+                        <p class="text-xs text-slate-400" id="indoor-sub">Condenser</p>
+                    </div>
+
+                    <!-- Gauges (Overlay during Sim) -->
+                    <div id="sim-gauges" class="hidden absolute top-4 right-4 flex flex-col gap-4">
+                        <div class="bg-red-900/40 p-2 rounded border border-red-500 text-center">
+                            <div class="text-[10px] uppercase">High Side</div>
+                            <div id="high-psi" class="text-xl font-bold">---</div>
+                        </div>
+                        <div class="bg-blue-900/40 p-2 rounded border border-blue-500 text-center">
+                            <div class="text-[10px] uppercase">Low Side</div>
+                            <div id="low-psi" class="text-xl font-bold">---</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulation Controls (Dynamic) -->
+                <div id="sim-controls" class="hidden bg-slate-800 p-6 rounded-xl border border-slate-700">
+                    <h3 class="text-xl font-bold mb-4">Live System Tuning</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Ambient Outdoor Temp: <span id="val-outdoor" class="text-slate-400">95°F</span></label>
+                            <input type="range" min="10" max="115" value="95" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500" id="slider-outdoor">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Indoor Setpoint: <span id="val-indoor" class="text-slate-400">75°F</span></label>
+                            <input type="range" min="60" max="90" value="75" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500" id="slider-indoor">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Lesson Content / Details -->
+            <div id="info-panel" class="bg-slate-800 p-6 rounded-xl border border-slate-700 h-fit">
+                <div id="info-content">
+                    <h2 class="text-2xl font-bold text-blue-400 mb-4">Reversing Valve Active</h2>
+                    <p class="text-slate-300 mb-4">
+                        A Heat Pump uses a 4-way reversing valve to flip the flow of refrigerant. This allows the system to pull heat from the outside air and "pump" it indoors.
+                    </p>
+                    <div class="bg-slate-700/50 p-4 rounded-lg mb-4">
+                        <h4 class="font-bold text-white mb-2 underline">System Overview:</h4>
+                        <p class="text-sm text-slate-300" id="system-status-text">In Cooling mode, the indoor coil absorbs heat. In Heating mode, the roles switch!</p>
+                    </div>
+                    <p class="text-sm text-slate-400 italic">Toggle the COOL/HEAT switch above to see the flow change, then click components for details.</p>
+                </div>
+
+                <!-- Quiz Container (Hidden initially) -->
+                <div id="quiz-content" class="hidden">
+                    <h2 class="text-2xl font-bold text-yellow-500 mb-4">Mastery Exam</h2>
+                    <div id="question-box">
+                        <!-- Questions injected by JS -->
+                    </div>
+                    <div id="quiz-feedback" class="mt-4 p-3 rounded hidden"></div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="mt-12 pt-8 border-t border-slate-800 text-center text-slate-500 text-xs">
+            &copy; 2026 HVAC Master Academy | Created for Professional Technical Education
+        </footer>
+    </div>
+
+    <script>
+        let systemMode = 'cool'; // 'cool' or 'heat'
+        let currentTab = 'learn';
+
+        const componentData = {
+            compressor: {
+                title: "The Compressor",
+                icon: "fa-compress-arrows-alt",
+                color: "text-slate-300",
+                desc: "Regardless of mode, the compressor always moves refrigerant in one direction: suction in, discharge out. The reversing valve handles the path change.",
+                points: ["The workhorse of the system", "Always produces high-pressure discharge gas", "Power consumption increases as pressure ratios rise"],
+                state: "Always: Low Pressure Vapor → High Pressure Vapor"
+            },
+            txv: {
+                title: "Bi-Flow Metering",
+                icon: "fa-faucet",
+                color: "text-slate-300",
+                desc: "In heat pumps, the metering device must be able to handle flow in both directions or use a bypass check valve system.",
+                points: ["Drops pressure to allow phase change", "Controls superheat for efficiency", "Critical for system balance in both modes"],
+                state: "Always: High Pressure Liquid → Low Pressure Mix"
+            },
+            outdoor: {
+                cool: {
+                    title: "Outdoor Coil (Condenser)",
+                    icon: "fa-fan",
+                    color: "text-red-500",
+                    desc: "Rejects heat to the outdoor environment. Hot gas from the compressor enters here and turns into liquid.",
+                    points: ["Rejects heat gathered indoors", "Fan pulls air through fins", "Refrigerant exits as subcooled liquid"],
+                    state: "Cooling: High Pressure Vapor → High Pressure Liquid"
+                },
+                heat: {
+                    title: "Outdoor Coil (Evaporator)",
+                    icon: "fa-snowflake",
+                    color: "text-blue-500",
+                    desc: "Absorbs heat from the cold outdoor air. Even at 30°F, there is thermal energy the refrigerant can pick up.",
+                    points: ["Absorbs heat from outside", "Refrigerant boils at low temp", "May require a defrost cycle if it freezes"],
+                    state: "Heating: Low Pressure Liquid → Low Pressure Vapor"
+                }
+            },
+            indoor: {
+                cool: {
+                    title: "Indoor Coil (Evaporator)",
+                    icon: "fa-snowflake",
+                    color: "text-blue-500",
+                    desc: "Absorbs heat from the house. Cold refrigerant picks up heat from your return air.",
+                    points: ["Removes heat and humidity", "Blowers push air over cold fins", "Liquid boils into gas"],
+                    state: "Cooling: Low Pressure Liquid → Low Pressure Vapor"
+                },
+                heat: {
+                    title: "Indoor Coil (Condenser)",
+                    icon: "fa-fire",
+                    color: "text-red-500",
+                    desc: "Rejects heat into the house. The hot gas from the compressor comes here first to warm your home.",
+                    points: ["Pumps heat into the home", "Acts as the condenser in this mode", "Refrigerant exits as high-pressure liquid"],
+                    state: "Heating: High Pressure Vapor → High Pressure Liquid"
+                }
+            }
+        };
+
+        const questions = [
+            {
+                q: "In HEATING mode, which coil acts as the Condenser?",
+                a: ["Outdoor Coil", "Indoor Coil", "Both Coils", "Neither"],
+                correct: 1
+            },
+            {
+                q: "What is the primary component that allows a Heat Pump to switch between Cooling and Heating?",
+                a: ["The Compressor", "The Bi-Flow TXV", "The Reversing Valve", "The Thermostat"],
+                correct: 2
+            },
+            {
+                q: "True or False: In Heating mode, the outdoor coil is colder than the outdoor air.",
+                a: ["True - so it can absorb heat", "False - it must be hotter"],
+                correct: 0
+            }
+        ];
+
+        let currentQuestion = 0;
+
+        function setSystemMode(mode) {
+            systemMode = mode;
+            
+            // Update Toggle UI
+            const coolBtn = document.getElementById('mode-cool-btn');
+            const heatBtn = document.getElementById('mode-heat-btn');
+            
+            if (mode === 'cool') {
+                coolBtn.className = "px-4 py-2 rounded-md transition-all bg-blue-600 text-white font-bold";
+                heatBtn.className = "px-4 py-2 rounded-md transition-all text-slate-400";
+                document.getElementById('system-status-text').innerText = "In Cooling mode, the indoor coil absorbs heat and the outdoor coil rejects it.";
+            } else {
+                heatBtn.className = "px-4 py-2 rounded-md transition-all bg-orange-600 text-white font-bold";
+                coolBtn.className = "px-4 py-2 rounded-md transition-all text-slate-400";
+                document.getElementById('system-status-text').innerText = "In Heating mode, the indoor coil rejects heat into the home, acting as a condenser.";
+            }
+
+            updateVisuals();
+            if (currentTab === 'sim') updateSimulation();
+        }
+
+        function updateVisuals() {
+            const outdoor = document.getElementById('comp-outdoor');
+            const indoor = document.getElementById('comp-indoor');
+            const outdoorIcon = document.getElementById('outdoor-icon');
+            const indoorIcon = document.getElementById('indoor-icon');
+
+            if (systemMode === 'cool') {
+                // Outdoor is Condenser (Red)
+                outdoor.className = "component-card absolute top-10 left-1/2 -translate-x-1/2 bg-slate-900 border-2 border-red-500 p-4 rounded-xl w-48 text-center z-10";
+                outdoorIcon.className = "fas fa-fan text-red-500 mb-2";
+                document.getElementById('outdoor-sub').innerText = "Condenser";
+                
+                // Indoor is Evaporator (Blue)
+                indoor.className = "component-card absolute bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 border-2 border-blue-500 p-4 rounded-xl w-48 text-center z-10";
+                indoorIcon.className = "fas fa-snowflake text-blue-500 mb-2";
+                document.getElementById('indoor-sub').innerText = "Evaporator";
+
+                // Cooling Paths
+                setPath('flow-1', "M 450 350 L 450 100 L 400 100", 'hot-gas'); // Comp to Outdoor
+                setPath('flow-2', "M 200 100 L 150 100 L 150 200", 'hot-liquid'); // Outdoor to TXV
+                setPath('flow-3', "M 150 300 L 150 400 L 200 400", 'cold-liquid'); // TXV to Indoor
+                setPath('flow-4', "M 400 400 L 450 400 L 450 350", 'cold-gas'); // Indoor to Comp
+            } else {
+                // Outdoor is Evaporator (Blue)
+                outdoor.className = "component-card absolute top-10 left-1/2 -translate-x-1/2 bg-slate-900 border-2 border-blue-500 p-4 rounded-xl w-48 text-center z-10";
+                outdoorIcon.className = "fas fa-fan text-blue-500 mb-2";
+                document.getElementById('outdoor-sub').innerText = "Evaporator";
+
+                // Indoor is Condenser (Red)
+                indoor.className = "component-card absolute bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 border-2 border-red-500 p-4 rounded-xl w-48 text-center z-10";
+                indoorIcon.className = "fas fa-fire text-red-500 mb-2";
+                document.getElementById('indoor-sub').innerText = "Condenser";
+
+                // Heating Paths (Reversed)
+                setPath('flow-1', "M 450 350 L 450 400 L 400 400", 'hot-gas'); // Comp to Indoor
+                setPath('flow-2', "M 200 400 L 150 400 L 150 300", 'hot-liquid'); // Indoor to TXV
+                setPath('flow-3', "M 150 200 L 150 100 L 200 100", 'cold-liquid'); // TXV to Outdoor
+                setPath('flow-4', "M 400 100 L 450 100 L 450 350", 'cold-gas'); // Outdoor to Comp
+            }
+        }
+
+        function setPath(id, d, className) {
+            const path = document.getElementById(id);
+            path.setAttribute('d', d);
+            path.className.baseVal = "flow-line " + className;
+        }
+
+        function showInfo(id) {
+            let data;
+            if (id === 'outdoor' || id === 'indoor') {
+                data = componentData[id][systemMode];
+            } else {
+                data = componentData[id];
+            }
+
+            const html = `
+                <div class="animate-in fade-in duration-500">
+                    <div class="flex items-center gap-3 mb-4">
+                        <i class="fas ${data.icon} ${data.color} text-3xl"></i>
+                        <h2 class="text-2xl font-bold">${data.title}</h2>
+                    </div>
+                    <div class="bg-blue-500/10 border border-blue-500/30 p-3 rounded mb-4">
+                        <span class="text-xs uppercase font-bold text-blue-400">Current Process:</span>
+                        <p class="text-sm font-semibold">${data.state}</p>
+                    </div>
+                    <p class="text-slate-300 mb-6">${data.desc}</p>
+                    <ul class="space-y-3">
+                        ${data.points.map(p => `<li class="flex items-start gap-2 text-sm"><i class="fas fa-chevron-right text-blue-500 mt-1"></i> ${p}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+            document.getElementById('info-content').innerHTML = html;
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('btn-learn').classList.remove('tab-active');
+            document.getElementById('btn-sim').classList.remove('tab-active');
+            document.getElementById('btn-quiz').classList.remove('tab-active');
+            document.getElementById('btn-' + tab).classList.add('tab-active');
+
+            const infoPanel = document.getElementById('info-content');
+            const quizPanel = document.getElementById('quiz-content');
+            const simControls = document.getElementById('sim-controls');
+            const simGauges = document.getElementById('sim-gauges');
+
+            if (tab === 'learn') {
+                infoPanel.classList.remove('hidden');
+                quizPanel.classList.add('hidden');
+                simControls.classList.add('hidden');
+                simGauges.classList.add('hidden');
+            } else if (tab === 'sim') {
+                infoPanel.classList.remove('hidden');
+                quizPanel.classList.add('hidden');
+                simControls.classList.remove('hidden');
+                simGauges.classList.remove('hidden');
+                updateSimulation();
+            } else {
+                infoPanel.classList.add('hidden');
+                quizPanel.classList.remove('hidden');
+                simControls.classList.add('hidden');
+                simGauges.classList.add('hidden');
+                loadQuestion();
+            }
+        }
+
+        function updateSimulation() {
+            const outdoor = parseInt(document.getElementById('slider-outdoor').value);
+            const indoor = parseInt(document.getElementById('slider-indoor').value);
+
+            document.getElementById('val-outdoor').innerText = outdoor + '°F';
+            document.getElementById('val-indoor').innerText = indoor + '°F';
+
+            let highPsi, lowPsi;
+
+            if (systemMode === 'cool') {
+                highPsi = Math.round(outdoor * 3.5 + 40);
+                lowPsi = Math.round(indoor * 1.5 - 45);
+            } else {
+                // In heating, indoor is high side, outdoor is low side
+                highPsi = Math.round(indoor * 4.2 + 10);
+                lowPsi = Math.round(outdoor * 1.2 + 20);
+            }
+
+            document.getElementById('high-psi').innerText = highPsi + ' PSI';
+            document.getElementById('low-psi').innerText = lowPsi + ' PSI';
+
+            const speed = 10 - (highPsi / 100);
+            document.querySelectorAll('.flow-line').forEach(el => {
+                el.style.animationDuration = Math.max(0.5, speed) + 's';
+            });
+        }
+
+        function checkAnswer(idx) {
+            const feedback = document.getElementById('quiz-feedback');
+            feedback.classList.remove('hidden', 'bg-red-500/20', 'bg-green-500/20', 'text-red-400', 'text-green-400');
+            
+            if (idx === questions[currentQuestion].correct) {
+                feedback.innerText = "Correct! You understand the heat pump cycle.";
+                feedback.classList.add('bg-green-500/20', 'text-green-400');
+                
+                setTimeout(() => {
+                    currentQuestion++;
+                    if (currentQuestion < questions.length) {
+                        loadQuestion();
+                        feedback.classList.add('hidden');
+                    } else {
+                        document.getElementById('question-box').innerHTML = "<h3 class='text-xl font-bold text-center p-8'>Heat Pump Master Certification Achieved!<br><span class='text-green-500'>You're ready for the field.</span></h3>";
+                        feedback.classList.add('hidden');
+                    }
+                }, 2000);
+            } else {
+                feedback.innerText = "Incorrect. Review the reversing valve logic.";
+                feedback.classList.add('bg-red-500/20', 'text-red-400');
+            }
+        }
+
+        function loadQuestion() {
+            const q = questions[currentQuestion];
+            let html = `
+                <p class="mb-4 font-medium">${q.q}</p>
+                <div class="space-y-2">
+                    ${q.a.map((opt, i) => `<button onclick="checkAnswer(${i})" class="w-full text-left p-3 rounded bg-slate-700 hover:bg-slate-600 border border-slate-600 transition-colors">${String.fromCharCode(65+i)}) ${opt}</button>`).join('')}
+                </div>
+            `;
+            document.getElementById('question-box').innerHTML = html;
+        }
+
+        document.getElementById('slider-outdoor').addEventListener('input', updateSimulation);
+        document.getElementById('slider-indoor').addEventListener('input', updateSimulation);
+
+        window.onload = () => {
+            updateVisuals();
+        };
+    </script>
+</body>
+</html>
