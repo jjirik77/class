@@ -52,6 +52,7 @@
             stroke-dasharray: 12;
             animation: dash 3s linear infinite;
             filter: drop-shadow(0 0 2px currentColor);
+            transition: stroke 0.5s ease;
         }
 
         @keyframes dash {
@@ -102,6 +103,24 @@
         .status-ok { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
         .status-warn { background: rgba(234, 179, 8, 0.2); color: #eab308; }
         .status-crit { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+        .mode-toggle {
+            display: flex;
+            background: #1e293b;
+            padding: 4px;
+            border-radius: 999px;
+            border: 1px solid #334155;
+        }
+        .mode-btn {
+            padding: 6px 16px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+        .mode-btn.active-cooling { background: #3b82f6; color: white; }
+        .mode-btn.active-heating { background: #f97316; color: white; }
     </style>
 </head>
 <body class="p-4 md:p-6 min-h-screen">
@@ -151,7 +170,7 @@
                     <div class="absolute top-4 left-6 pointer-events-none">
                         <div class="flex items-center gap-2 text-xs font-bold text-green-500 uppercase tracking-widest mb-1">
                             <span class="w-2 h-2 bg-green-500 rounded-full led-blink"></span>
-                            System Operational: R-410A
+                            System Operational: <span id="display-mode">COOLING</span> (R-410A)
                         </div>
                     </div>
 
@@ -159,11 +178,11 @@
                     <div onclick="inspect('condenser')" class="component-node absolute top-[60px] left-1/2 -translate-x-1/2 w-64 bg-slate-900 border-b-4 border-red-500 p-4 rounded-xl shadow-xl">
                         <div class="flex items-center gap-3">
                             <div class="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-fan text-red-500 text-xl"></i>
+                                <i class="fas fa-fan text-red-500 text-xl" id="icon-outdoor"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-sm">Outdoor Condenser</h3>
-                                <p class="text-[10px] text-slate-400 uppercase tracking-tighter">Heat Rejection Phase</p>
+                                <h3 class="font-bold text-sm" id="label-outdoor-unit">Outdoor Unit</h3>
+                                <p class="text-[10px] text-slate-400 uppercase tracking-tighter" id="role-outdoor">Condenser Role</p>
                             </div>
                         </div>
                     </div>
@@ -179,19 +198,19 @@
                     <div onclick="inspect('txv')" class="component-node absolute top-1/2 -translate-y-1/2 left-[50px] w-48 bg-slate-900 border-l-4 border-slate-500 p-4 rounded-xl shadow-xl">
                         <div class="text-center">
                             <i class="fas fa-sliders text-slate-400 text-3xl mb-2"></i>
-                            <h3 class="font-bold text-sm">Thermostatic Expansion</h3>
-                            <p class="text-[10px] text-slate-500 uppercase">Pressure Regulation</p>
+                            <h3 class="font-bold text-sm">Expansion Valve</h3>
+                            <p class="text-[10px] text-slate-500 uppercase">Metering Device</p>
                         </div>
                     </div>
 
                     <div onclick="inspect('evaporator')" class="component-node absolute bottom-[60px] left-1/2 -translate-x-1/2 w-64 bg-slate-900 border-t-4 border-blue-500 p-4 rounded-xl shadow-xl">
                         <div class="flex items-center gap-3">
                             <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-snowflake text-blue-500 text-xl"></i>
+                                <i class="fas fa-snowflake text-blue-500 text-xl" id="icon-indoor"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-sm">Indoor Evaporator</h3>
-                                <p class="text-[10px] text-slate-400 uppercase tracking-tighter">Heat Absorption Phase</p>
+                                <h3 class="font-bold text-sm" id="label-indoor-unit">Indoor Unit</h3>
+                                <p class="text-[10px] text-slate-400 uppercase tracking-tighter" id="role-indoor">Evaporator Role</p>
                             </div>
                         </div>
                     </div>
@@ -218,21 +237,36 @@
                 </div>
 
                 <!-- Simulation Sliders -->
-                <div id="sim-controls" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
-                    <div class="space-y-4">
-                        <div class="flex justify-between">
-                            <label class="text-sm font-bold text-red-400 uppercase">Outdoor Ambient Temp</label>
-                            <span id="label-outdoor" class="mono text-red-400">95°F</span>
+                <div id="sim-controls" class="hidden flex flex-col gap-6 bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-500 uppercase">Operation Mode</h4>
+                            <p class="text-[10px] text-slate-400">Heat pumps reverse flow via the Reversing Valve.</p>
                         </div>
-                        <input type="range" id="input-outdoor" min="60" max="115" value="95" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none accent-red-500">
+                        <div class="mode-toggle">
+                            <button onclick="toggleSystemMode('cooling')" id="btn-mode-cooling" class="mode-btn active-cooling">Cooling</button>
+                            <button onclick="toggleSystemMode('heating')" id="btn-mode-heating" class="mode-btn text-slate-400">Heating</button>
+                        </div>
                     </div>
 
-                    <div class="space-y-4">
-                        <div class="flex justify-between">
-                            <label class="text-sm font-bold text-blue-400 uppercase">Indoor Return Air</label>
-                            <span id="label-indoor" class="mono text-blue-400">75°F</span>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <div class="flex justify-between">
+                                <label class="text-sm font-bold text-red-400 uppercase">Outdoor Ambient Temp</label>
+                                <span id="label-outdoor" class="mono text-red-400">95°F</span>
+                            </div>
+                            <input type="range" id="input-outdoor" min="0" max="115" value="95" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none accent-red-500">
+                            <p class="text-[10px] text-slate-500 italic" id="hint-outdoor">Hotter outdoor air makes heat rejection harder in Cooling mode.</p>
                         </div>
-                        <input type="range" id="input-indoor" min="60" max="90" value="75" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none accent-blue-500">
+
+                        <div class="space-y-4">
+                            <div class="flex justify-between">
+                                <label class="text-sm font-bold text-blue-400 uppercase">Indoor Return Air</label>
+                                <span id="label-indoor" class="mono text-blue-400">75°F</span>
+                            </div>
+                            <input type="range" id="input-indoor" min="60" max="95" value="75" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none accent-blue-500">
+                            <p class="text-[10px] text-slate-500 italic">High return air adds "load" to the evaporator.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -264,8 +298,9 @@
                                 </div>
                             </div>
                             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                                <label class="text-[10px] text-slate-500 font-bold uppercase block mb-1">Amperage Draw</label>
+                                <label class="text-[10px] text-slate-500 font-bold uppercase block mb-1">Compressor Amps</label>
                                 <div id="val-amps" class="text-xl font-bold text-white mono">--</div>
+                                <div id="stress-level" class="status-badge mt-1 text-center">LIGHT LOAD</div>
                             </div>
                             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
                                 <label class="text-[10px] text-slate-500 font-bold uppercase block mb-1">Compression Ratio</label>
@@ -311,6 +346,7 @@
 
     <script>
         let currentMode = 'learn';
+        let systemMode = 'cooling'; // 'cooling' or 'heating'
         let faultActive = null;
         let outdoorTemp = 95;
         let indoorTemp = 75;
@@ -326,8 +362,8 @@
             },
             condenser: {
                 id: 'condenser',
-                title: "Condenser Coil",
-                desc: "Removes energy from hot gas. Refrigerant changes from gas to high-pressure liquid.",
+                title: "Outdoor Unit",
+                desc: "In Cooling mode, it rejects heat. In Heating mode, it absorbs heat from the outdoors.",
                 bullets: ["De-superheats gas", "Condenses to liquid", "Subcools liquid", "Airflow dependent"],
                 icon: "fa-fan"
             },
@@ -340,9 +376,9 @@
             },
             evaporator: {
                 id: 'evaporator',
-                title: "Evaporator Coil",
-                desc: "Where cooling happens. Cold liquid boils into vapor as it absorbs heat.",
-                bullets: ["Absorbs heat", "Boils refrigerant", "Dehumidifies", "Vaporizes liquid"],
+                title: "Indoor Unit",
+                desc: "In Cooling mode, it absorbs heat from your home. In Heating mode, it rejects heat into your home.",
+                bullets: ["Absorbs/Rejects heat", "Changes state", "Dehumidifies (Cooling)", "Airflow critical"],
                 icon: "fa-snowflake"
             }
         };
@@ -367,22 +403,50 @@
             log("System Online: Welcome Technician.");
         };
 
+        function toggleSystemMode(mode) {
+            systemMode = mode;
+            const coolBtn = document.getElementById('btn-mode-cooling');
+            const heatBtn = document.getElementById('btn-mode-heating');
+            const display = document.getElementById('display-mode');
+            
+            if (mode === 'cooling') {
+                coolBtn.className = "mode-btn active-cooling";
+                heatBtn.className = "mode-btn text-slate-400";
+                display.innerText = "COOLING";
+                log("Reversing Valve Position: DE-ENERGIZED (Cooling)");
+                document.getElementById('role-outdoor').innerText = "Condenser Role";
+                document.getElementById('role-indoor').innerText = "Evaporator Role";
+                document.getElementById('hint-outdoor').innerText = "Hotter outdoor air makes heat rejection harder in Cooling mode.";
+            } else {
+                heatBtn.className = "mode-btn active-heating";
+                coolBtn.className = "mode-btn text-slate-400";
+                display.innerText = "HEATING";
+                log("Reversing Valve Position: ENERGIZED (Heating)");
+                document.getElementById('role-outdoor').innerText = "Evaporator Role";
+                document.getElementById('role-indoor').innerText = "Condenser Role";
+                document.getElementById('hint-outdoor').innerText = "Colder outdoor air makes heat absorption harder in Heating mode.";
+            }
+
+            // Visual Line Update
+            const lines = document.querySelectorAll('.flow-line');
+            if (mode === 'heating') {
+                document.getElementById('path-1').className = "flow-line hot-gas"; // Still hot gas but going to Indoor unit
+                // Logic-wise, Path 1 and Path 4 logic swaps in the SVG usually but for simplicity 
+                // we will keep the path visual but change the color/physics.
+            }
+
+            updateSimUI();
+        }
+
         function setMode(mode) {
             currentMode = mode;
             faultActive = null;
-            
-            // UI Navigation
             document.querySelectorAll('nav button').forEach(b => b.classList.remove('tab-active', 'text-white'));
             document.getElementById(`btn-${mode}`).classList.add('tab-active');
-            
-            // Content Visibility
             ['learn', 'sim', 'diag', 'quiz'].forEach(p => document.getElementById(`content-${p}`).classList.add('hidden'));
             document.getElementById(`content-${mode}`).classList.remove('hidden');
-            
-            // Panel Specific Logic
             const gauges = document.getElementById('sim-gauges');
             const ctrls = document.getElementById('sim-controls');
-            
             if (mode === 'sim' || mode === 'diag') {
                 gauges.classList.remove('hidden');
                 ctrls.classList.remove('hidden');
@@ -392,10 +456,8 @@
                 gauges.classList.add('hidden');
                 ctrls.classList.add('hidden');
             }
-
             if (mode === 'learn') resetBasics();
             if (mode === 'quiz') initQuiz();
-
             const titles = { learn: 'Lesson 01: The Basics', sim: 'Real-Time Telemetry', diag: 'Troubleshooting', quiz: 'Exam Mode' };
             document.getElementById('hub-title').innerText = titles[mode];
             log(`Mode: ${mode.toUpperCase()}`);
@@ -418,13 +480,13 @@
                             <span class="text-blue-500 font-bold mr-2">01</span> The Compressor
                         </button>
                         <button onclick="inspect('condenser')" class="w-full text-left p-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors group">
-                            <span class="text-blue-500 font-bold mr-2">02</span> The Condenser
+                            <span class="text-blue-500 font-bold mr-2">02</span> The Outdoor Unit
                         </button>
                         <button onclick="inspect('txv')" class="w-full text-left p-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors group">
                             <span class="text-blue-500 font-bold mr-2">03</span> Expansion Valve
                         </button>
                         <button onclick="inspect('evaporator')" class="w-full text-left p-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors group">
-                            <span class="text-blue-500 font-bold mr-2">04</span> The Evaporator
+                            <span class="text-blue-500 font-bold mr-2">04</span> The Indoor Unit
                         </button>
                     </div>
                 </div>
@@ -433,19 +495,16 @@
 
         function inspect(id) {
             setMode('learn');
-            
             const data = components[id];
             const currentIndex = cycleOrder.indexOf(id);
             const prevId = currentIndex > 0 ? cycleOrder[currentIndex - 1] : null;
             const nextId = currentIndex < cycleOrder.length - 1 ? cycleOrder[currentIndex + 1] : null;
-
             const hubBody = document.getElementById('content-learn');
             hubBody.innerHTML = `
                 <div class="animate-in slide-in-from-right duration-300">
                     <button onclick="resetBasics()" class="text-[10px] text-blue-400 uppercase mb-4 hover:underline">
                         <i class="fas fa-arrow-left mr-1"></i> Back to Menu
                     </button>
-                    
                     <div class="flex items-center gap-3 mb-4">
                         <i class="fas ${data.icon} text-blue-500 text-2xl"></i>
                         <h3 class="font-bold text-lg text-white">${data.title}</h3>
@@ -454,16 +513,13 @@
                     <div class="space-y-2 mb-6">
                         ${data.bullets.map(b => `<li class="text-xs flex items-center gap-2 text-slate-400"><i class="fas fa-check text-blue-600"></i> ${b}</li>`).join('')}
                     </div>
-
-                    <!-- Sequential Navigation -->
                     <div class="grid grid-cols-2 gap-3 mt-8 border-t border-slate-800 pt-6">
                         ${prevId ? `
                             <button onclick="inspect('${prevId}')" class="flex flex-col items-start p-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-all group">
                                 <span class="text-[10px] text-slate-500 uppercase font-bold">Previous</span>
-                                <span class="text-xs font-semibold text-white group-hover:text-blue-400 truncate w-full">${components[prevId].title}</span>
+                                <span class="text-xs font-semibold text-white group-hover:text-blue-400 truncate w-full text-left">${components[prevId].title}</span>
                             </button>
                         ` : `<div></div>`}
-                        
                         ${nextId ? `
                             <button onclick="inspect('${nextId}')" class="flex flex-col items-end p-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-all group">
                                 <span class="text-[10px] text-slate-500 uppercase font-bold text-right">Next</span>
@@ -471,8 +527,8 @@
                             </button>
                         ` : `
                             <button onclick="setMode('sim')" class="flex flex-col items-end p-3 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 transition-all group">
-                                <span class="text-[10px] text-blue-400 uppercase font-bold">End Lesson</span>
-                                <span class="text-xs font-semibold text-white">Go to Simulator</span>
+                                <span class="text-[10px] text-blue-400 uppercase font-bold text-right">Simulator</span>
+                                <span class="text-xs font-semibold text-white text-right">Go Live</span>
                             </button>
                         `}
                     </div>
@@ -487,11 +543,35 @@
             document.getElementById('label-outdoor').innerText = outdoorTemp + '°F';
             document.getElementById('label-indoor').innerText = indoorTemp + '°F';
 
-            let headPsi = (outdoorTemp + 28) * 3.35; 
-            let suctionPsi = (indoorTemp - 32) * 2.6;
-            let sh = 10 + (indoorTemp - 75) * 0.4 - (outdoorTemp - 95) * 0.1;
-            let sc = 11 + (outdoorTemp - 95) * 0.25;
-            let amps = 8.5 + (outdoorTemp - 70) * 0.15;
+            let headPsi, suctionPsi, sh, sc, amps;
+            const deltaT = Math.abs(outdoorTemp - indoorTemp);
+
+            if (systemMode === 'cooling') {
+                // COOLING PHYSICS
+                // High side rises with outdoor temp
+                headPsi = (outdoorTemp + 28) * 3.35; 
+                // Low side rises with indoor temp (load)
+                suctionPsi = (indoorTemp - 32) * 2.6;
+                // Add stress factor: if outdoor is very high, head climbs exponentially
+                if (outdoorTemp > 100) headPsi += (outdoorTemp - 100) * 4;
+                
+                sh = 10 + (indoorTemp - 75) * 0.4;
+                sc = 11 + (outdoorTemp - 95) * 0.2;
+                amps = 8.5 + (headPsi / 40);
+            } else {
+                // HEATING PHYSICS (Heat Pump)
+                // High side is now INDOOR (acting as condenser)
+                headPsi = (indoorTemp + 42) * 3.6;
+                // Low side is now OUTDOOR (acting as evaporator)
+                suctionPsi = (outdoorTemp - 15) * 2.4;
+                // Extreme cold efficiency loss
+                if (outdoorTemp < 30) suctionPsi -= (30 - outdoorTemp) * 2;
+                if (outdoorTemp < 15) suctionPsi = Math.max(10, suctionPsi - 20); // Deep vacuum risk
+
+                sh = 12 + (outdoorTemp < 40 ? (40 - outdoorTemp) * 0.5 : 0);
+                sc = 9 + (75 - indoorTemp) * 0.2;
+                amps = 9.0 + (headPsi / 35);
+            }
 
             if (faultActive) {
                 headPsi += faultActive.headMod;
@@ -501,6 +581,11 @@
                 amps += (faultActive.headMod > 0 ? 3.5 : -1.5);
             }
 
+            // Safety limiters
+            headPsi = Math.max(50, headPsi);
+            suctionPsi = Math.max(5, suctionPsi);
+
+            // Update UI
             document.getElementById('gauge-head').innerText = headPsi.toFixed(1) + ' PSI';
             document.getElementById('gauge-suction').innerText = suctionPsi.toFixed(1) + ' PSI';
             document.getElementById('val-sh').innerText = sh.toFixed(1) + '°F';
@@ -508,11 +593,41 @@
             document.getElementById('val-amps').innerText = amps.toFixed(1) + ' AMPS';
             document.getElementById('val-ratio').innerText = ((headPsi + 14.7) / (suctionPsi + 14.7)).toFixed(2) + ' : 1';
 
-            updateStatus('status-head', headPsi, 280, 430);
-            updateStatus('status-suction', suctionPsi, 100, 150);
+            // Stress Indicators
+            const stressEl = document.getElementById('stress-level');
+            if (amps > 18) {
+                stressEl.innerText = "CRITICAL LOAD";
+                stressEl.className = "status-badge mt-1 text-center status-crit";
+            } else if (amps > 14) {
+                stressEl.innerText = "HEAVY LOAD";
+                stressEl.className = "status-badge mt-1 text-center status-warn";
+            } else {
+                stressEl.innerText = "LIGHT LOAD";
+                stressEl.className = "status-badge mt-1 text-center status-ok";
+            }
+
+            updateStatus('status-head', headPsi, 280, 500);
+            updateStatus('status-suction', suctionPsi, 90, 160);
             
-            const speed = Math.max(0.3, 4 - (headPsi/180));
+            // Visual Animation Speed
+            const speed = Math.max(0.2, 5 - (amps / 4));
             document.querySelectorAll('.flow-line').forEach(el => el.style.animationDuration = speed + 's');
+
+            // Swap Flow Line Colors for Heating
+            const p1 = document.getElementById('path-1');
+            const p2 = document.getElementById('path-2');
+            const p3 = document.getElementById('path-3');
+            const p4 = document.getElementById('path-4');
+            
+            if (systemMode === 'heating') {
+                // In heating, compressor (right) sends hot gas to INDOOR unit (bottom)
+                // We fake the visual flow to keep paths simple
+                p4.style.stroke = "#ef4444"; // Path to indoor unit is now hot gas
+                p1.style.stroke = "#3b82f6"; // Path from outdoor unit is now suction gas
+            } else {
+                p4.style.stroke = "#3b82f6";
+                p1.style.stroke = "#ef4444";
+            }
         }
 
         function updateStatus(id, val, min, max) {
