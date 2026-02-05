@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architectural Thinking: Logical vs. Physical</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --logical-blue: #3b82f6;
+            --physical-grey: #6b7280;
+            --transition-speed: 0.5s;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            overflow-x: hidden;
+        }
+
+        .diagram-container {
+            perspective: 1000px;
+            min-height: 500px;
+        }
+
+        .view-card {
+            transition: transform var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1), opacity var(--transition-speed);
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .node {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .node:hover {
+            transform: translateY(-5px) scale(1.05);
+            filter: brightness(1.1);
+        }
+
+        .connector {
+            stroke-dasharray: 8;
+            animation: dash 20s linear infinite;
+        }
+
+        @keyframes dash {
+            to { stroke-dashoffset: 1000; }
+        }
+
+        .active-link {
+            stroke: #fbbf24 !important;
+            stroke-width: 4 !important;
+            filter: drop-shadow(0 0 5px rgba(251, 191, 36, 0.5));
+        }
+
+        .implementation-arrow {
+            transition: all 0.5s ease;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .tab-btn.active {
+            background-color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .diagram-svg { width: 100%; height: auto; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+
+    <nav class="p-6 flex flex-col md:flex-row justify-between items-center gap-4 max-w-7xl mx-auto">
+        <div class="flex items-center gap-3">
+            <div class="bg-blue-600 p-2 rounded-lg text-white">
+                <i class="fas fa-layer-group text-xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight">System Design <span class="text-blue-600">Architect</span></h1>
+        </div>
+        
+        <div class="flex bg-slate-200 p-1 rounded-xl w-full md:w-auto">
+            <button id="btn-logical" onclick="switchView('logical')" class="tab-btn active px-6 py-2 rounded-lg flex-1 md:flex-none font-medium transition-all">
+                <i class="fas fa-project-diagram mr-2"></i>Logical View
+            </button>
+            <button id="btn-physical" onclick="switchView('physical')" class="tab-btn px-6 py-2 rounded-lg flex-1 md:flex-none font-medium transition-all text-slate-500">
+                <i class="fas fa-server mr-2"></i>Physical View
+            </button>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left: Interaction Area -->
+        <div class="lg:col-span-8 flex flex-col gap-6">
+            
+            <div class="view-card bg-white p-6 md:p-8 relative overflow-hidden h-[600px]">
+                <!-- Logical Diagram -->
+                <div id="diagram-logical" class="absolute inset-0 p-8 flex flex-col transition-all duration-500">
+                    <div class="flex justify-between items-start mb-8">
+                        <div>
+                            <h2 class="text-3xl font-bold text-blue-600">Logical Diagram</h2>
+                            <p class="text-slate-500">Focus: Abstract Relationships & Data Flow</p>
+                        </div>
+                        <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">Architect's View</span>
+                    </div>
+
+                    <div class="flex-1 flex items-center justify-center">
+                        <svg class="diagram-svg w-full max-w-2xl" viewBox="0 0 800 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Lines -->
+                            <path class="connector stroke-blue-200" d="M200 150 H600" stroke-width="2" stroke-dasharray="8"/>
+                            <path class="connector stroke-blue-200" d="M200 350 H600" stroke-width="2" stroke-dasharray="8"/>
+                            <path class="connector stroke-blue-200" d="M150 150 V350" stroke-width="2" stroke-dasharray="8"/>
+                            <path class="connector stroke-blue-200" d="M650 150 V350" stroke-width="2" stroke-dasharray="8"/>
+                            <path class="connector stroke-blue-200" d="M150 250 H400" stroke-width="2" stroke-dasharray="8"/>
+                            
+                            <!-- Nodes -->
+                            <g class="node" onclick="selectElement('ui')">
+                                <circle cx="150" cy="150" r="60" fill="white" stroke="#3b82f6" stroke-width="3"/>
+                                <circle cx="150" cy="150" r="50" fill="#eff6ff"/>
+                                <text x="150" y="150" text-anchor="middle" dominant-baseline="middle" fill="#1e3a8a" class="font-bold text-lg">User Interface</text>
+                            </g>
+
+                            <g class="node" onclick="selectElement('logic')">
+                                <rect x="580" y="100" width="140" height="100" rx="12" fill="white" stroke="#3b82f6" stroke-width="3"/>
+                                <text x="650" y="140" text-anchor="middle" fill="#1e3a8a" class="font-bold">Application</text>
+                                <text x="650" y="165" text-anchor="middle" fill="#1e3a8a" class="font-bold">Logic</text>
+                            </g>
+
+                            <g class="node" onclick="selectElement('logic')">
+                                <rect x="330" y="200" width="140" height="100" rx="12" fill="white" stroke="#3b82f6" stroke-width="3"/>
+                                <text x="400" y="240" text-anchor="middle" fill="#1e3a8a" class="font-bold">Application</text>
+                                <text x="400" y="265" text-anchor="middle" fill="#1e3a8a" class="font-bold">Logic</text>
+                            </g>
+
+                            <g class="node" onclick="selectElement('db')">
+                                <circle cx="150" cy="350" r="60" fill="white" stroke="#3b82f6" stroke-width="3"/>
+                                <circle cx="150" cy="350" r="50" fill="#eff6ff"/>
+                                <text x="150" y="350" text-anchor="middle" fill="#1e3a8a" class="font-bold">Database</text>
+                            </g>
+
+                            <g class="node" onclick="selectElement('external')">
+                                <rect x="580" y="300" width="140" height="100" rx="12" fill="white" stroke="#3b82f6" stroke-width="3"/>
+                                <text x="650" y="340" text-anchor="middle" fill="#1e3a8a" class="font-bold">External</text>
+                                <text x="650" y="365" text-anchor="middle" fill="#1e3a8a" class="font-bold">Service</text>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Physical Diagram -->
+                <div id="diagram-physical" class="absolute inset-0 p-8 flex flex-col opacity-0 pointer-events-none translate-y-10 transition-all duration-500">
+                    <div class="flex justify-between items-start mb-8">
+                        <div>
+                            <h2 class="text-3xl font-bold text-slate-700">Physical Diagram</h2>
+                            <p class="text-slate-500">Focus: Hardware, Infrastructure & Tech Stack</p>
+                        </div>
+                        <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm font-semibold">Engineer's View</span>
+                    </div>
+
+                    <div class="flex-1 flex items-center justify-center">
+                        <svg class="diagram-svg w-full max-w-2xl" viewBox="0 0 800 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Cables -->
+                            <path class="stroke-slate-400" d="M300 150 H550 V200" stroke-width="3"/>
+                            <path class="stroke-slate-400" d="M550 300 V350 H450" stroke-width="3"/>
+                            <path class="stroke-slate-400" d="M550 250 H650" stroke-width="3" marker-end="url(#arrowhead)"/>
+                            
+                            <!-- Web Server -->
+                            <g class="node" onclick="selectElement('ui')">
+                                <rect x="150" y="100" width="160" height="100" rx="12" fill="white" stroke="#64748b" stroke-width="3"/>
+                                <path d="M100 130 H150 M110 120 V140" stroke="#64748b" stroke-width="2"/>
+                                <text x="230" y="140" text-anchor="middle" fill="#334155" class="font-bold">Web Server</text>
+                                <text x="230" y="165" text-anchor="middle" fill="#64748b" class="text-sm italic">(Node.js)</text>
+                            </g>
+
+                            <!-- App Server -->
+                            <g class="node" onclick="selectElement('logic')">
+                                <rect x="470" y="200" width="160" height="100" rx="12" fill="white" stroke="#64748b" stroke-width="3"/>
+                                <text x="550" y="240" text-anchor="middle" fill="#334155" class="font-bold">App Server</text>
+                                <text x="550" y="265" text-anchor="middle" fill="#64748b" class="text-sm italic">(Python/Django)</text>
+                            </g>
+
+                            <!-- DB Cluster -->
+                            <g class="node" onclick="selectElement('db')">
+                                <rect x="250" y="300" width="180" height="100" rx="12" fill="white" stroke="#64748b" stroke-width="3"/>
+                                <text x="340" y="335" text-anchor="middle" fill="#334155" class="font-bold">DB Cluster</text>
+                                <text x="340" y="360" text-anchor="middle" fill="#64748b" class="text-xs font-mono tracking-tighter">(POSTGRES_PROD_01)</text>
+                            </g>
+
+                            <!-- Cloud Gateway -->
+                            <g class="node" onclick="selectElement('external')">
+                                <path d="M650 350 C650 320 680 300 710 300 C740 300 770 320 770 350" stroke="#64748b" stroke-width="3" fill="none"/>
+                                <rect x="650" y="350" width="120" height="60" rx="8" fill="white" stroke="#64748b" stroke-width="3"/>
+                                <text x="710" y="380" text-anchor="middle" fill="#334155" class="font-bold text-xs">Cloud Gateway</text>
+                                <path d="M710 330 V360 M700 340 L710 330 L720 340" stroke="#64748b" stroke-width="2"/>
+                            </g>
+
+                            <defs>
+                                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orientation="auto">
+                                    <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass p-6 rounded-2xl flex items-center justify-center gap-8 border-dashed border-2 border-slate-300">
+                <div class="text-center">
+                    <p class="text-xs uppercase tracking-widest text-slate-400 font-bold mb-2">Process</p>
+                    <div class="flex items-center gap-4">
+                        <span class="text-lg font-bold text-blue-600">Conceptualization</span>
+                        <div class="implementation-arrow h-1 w-24 bg-gradient-to-r from-blue-500 to-slate-500 rounded-full relative">
+                            <div class="absolute -right-1 -top-1 border-4 border-transparent border-l-slate-500"></div>
+                        </div>
+                        <span class="text-lg font-bold text-slate-700">Implementation</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Detail Panel -->
+        <div class="lg:col-span-4 flex flex-col gap-6">
+            <div id="info-card" class="bg-white rounded-3xl p-6 shadow-xl border border-slate-100 flex-1 h-fit">
+                <div id="welcome-msg">
+                    <div class="bg-blue-50 w-12 h-12 rounded-xl flex items-center justify-center mb-4">
+                        <i class="fas fa-mouse-pointer text-blue-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Interactive Guide</h3>
+                    <p class="text-slate-600 leading-relaxed mb-4">
+                        Architecture is about moving from the <b>What</b> to the <b>How</b>. 
+                    </p>
+                    <ul class="space-y-3 text-sm">
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                            <span><b>Toggle Views</b> to see how abstract ideas become concrete hardware.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                            <span><b>Select Nodes</b> to see detailed technical mappings.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div id="element-details" class="hidden">
+                    <div id="detail-icon" class="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 text-3xl"></div>
+                    <h2 id="detail-title" class="text-2xl font-bold mb-1">Title</h2>
+                    <p id="detail-subtitle" class="text-blue-500 font-medium mb-4 text-sm uppercase tracking-wide">Category</p>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-400 uppercase mb-2">Logical Role</h4>
+                            <p id="detail-logical" class="text-slate-700 bg-blue-50 p-3 rounded-xl border border-blue-100 italic"></p>
+                        </div>
+                        
+                        <div class="flex items-center justify-center">
+                            <i class="fas fa-arrow-down text-slate-300"></i>
+                        </div>
+
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-400 uppercase mb-2">Physical Execution</h4>
+                            <p id="detail-physical" class="text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100"></p>
+                        </div>
+
+                        <div id="tech-stack" class="pt-4 border-t border-slate-100">
+                            <h4 class="text-xs font-bold text-slate-400 uppercase mb-3">Technologies Involved</h4>
+                            <div id="tag-container" class="flex flex-wrap gap-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparison Table -->
+            <div class="bg-slate-900 rounded-3xl p-6 text-white shadow-2xl">
+                <h3 class="text-sm font-bold text-blue-400 uppercase mb-4 tracking-tighter">Key Differences</h3>
+                <div class="space-y-4 text-xs">
+                    <div class="flex justify-between border-b border-slate-800 pb-2">
+                        <span class="text-slate-500">Audience</span>
+                        <span id="diff-audience">Stakeholders</span>
+                    </div>
+                    <div class="flex justify-between border-b border-slate-800 pb-2">
+                        <span class="text-slate-500">Focus</span>
+                        <span id="diff-focus">Data Flow</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Detail</span>
+                        <span id="diff-detail">Conceptual</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const data = {
+            ui: {
+                title: "User Interface",
+                subtitle: "Front-End Presentation",
+                logical: "Defines where users interact with the system and how information is visualized.",
+                physical: "Implemented as a Node.js Web Server serving React/Vue assets and handling HTTP requests.",
+                icon: "fa-desktop",
+                color: "bg-blue-100 text-blue-600",
+                tags: ["Node.js", "React", "Nginx", "HTTPS"]
+            },
+            logic: {
+                title: "Application Logic",
+                subtitle: "Core Business Processes",
+                logical: "The rules and calculations that define how data is processed independent of technology.",
+                physical: "Deployed on dedicated Application Servers running Python (Django/Flask) behind a Load Balancer.",
+                icon: "fa-cogs",
+                color: "bg-purple-100 text-purple-600",
+                tags: ["Python 3.11", "Docker", "Kubernetes", "Redis"]
+            },
+            db: {
+                title: "Database",
+                subtitle: "Persistent Storage",
+                logical: "Abstract representation of data entities, attributes, and long-term storage requirements.",
+                physical: "A high-availability PostgreSQL cluster with Master-Slave replication and automated backups.",
+                icon: "fa-database",
+                color: "bg-emerald-100 text-emerald-600",
+                tags: ["PostgreSQL", "RAID 10", "SSD Storage", "SSL"]
+            },
+            external: {
+                title: "External Service",
+                subtitle: "Third-Party Integration",
+                logical: "Requirements for external data sources or functionality (e.g., Payment, Weather, SSO).",
+                physical: "Secured via a Cloud API Gateway with rate limiting, API keys, and VPC peering.",
+                icon: "fa-cloud",
+                color: "bg-orange-100 text-orange-600",
+                tags: ["REST API", "OAuth 2.0", "AWS Gateway", "JSON"]
+            }
+        };
+
+        let currentView = 'logical';
+
+        function switchView(view) {
+            currentView = view;
+            
+            const logicalBtn = document.getElementById('btn-logical');
+            const physicalBtn = document.getElementById('btn-physical');
+            const logicalDiag = document.getElementById('diagram-logical');
+            const physicalDiag = document.getElementById('diagram-physical');
+            
+            const diffAudience = document.getElementById('diff-audience');
+            const diffFocus = document.getElementById('diff-focus');
+            const diffDetail = document.getElementById('diff-detail');
+
+            if (view === 'logical') {
+                logicalBtn.classList.add('active', 'text-slate-900');
+                logicalBtn.classList.remove('text-slate-500');
+                physicalBtn.classList.remove('active', 'text-slate-900');
+                physicalBtn.classList.add('text-slate-500');
+
+                logicalDiag.style.opacity = '1';
+                logicalDiag.style.pointerEvents = 'auto';
+                logicalDiag.style.transform = 'translateY(0)';
+                
+                physicalDiag.style.opacity = '0';
+                physicalDiag.style.pointerEvents = 'none';
+                physicalDiag.style.transform = 'translateY(20px)';
+
+                diffAudience.textContent = "Stakeholders/Architects";
+                diffFocus.textContent = "Relationships";
+                diffDetail.textContent = "Conceptual View";
+            } else {
+                physicalBtn.classList.add('active', 'text-slate-900');
+                physicalBtn.classList.remove('text-slate-500');
+                logicalBtn.classList.remove('active', 'text-slate-900');
+                logicalBtn.classList.add('text-slate-500');
+
+                logicalDiag.style.opacity = '0';
+                logicalDiag.style.pointerEvents = 'none';
+                logicalDiag.style.transform = 'translateY(-20px)';
+                
+                physicalDiag.style.opacity = '1';
+                physicalDiag.style.pointerEvents = 'auto';
+                physicalDiag.style.transform = 'translateY(0)';
+
+                diffAudience.textContent = "Engineers/Technicians";
+                diffFocus.textContent = "Hardware/Specs";
+                diffDetail.textContent = "Concrete View";
+            }
+        }
+
+        function selectElement(key) {
+            const el = data[key];
+            const welcome = document.getElementById('welcome-msg');
+            const details = document.getElementById('element-details');
+            
+            welcome.classList.add('hidden');
+            details.classList.remove('hidden');
+
+            document.getElementById('detail-title').innerText = el.title;
+            document.getElementById('detail-subtitle').innerText = el.subtitle;
+            document.getElementById('detail-logical').innerText = el.logical;
+            document.getElementById('detail-physical').innerText = el.physical;
+            
+            const iconBox = document.getElementById('detail-icon');
+            iconBox.className = `w-16 h-16 rounded-2xl flex items-center justify-center mb-6 text-3xl ${el.color}`;
+            iconBox.innerHTML = `<i class="fas ${el.icon}"></i>`;
+
+            const tagContainer = document.getElementById('tag-container');
+            tagContainer.innerHTML = '';
+            el.tags.forEach(tag => {
+                const span = document.createElement('span');
+                span.className = 'px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold border border-slate-200';
+                span.innerText = tag;
+                tagContainer.appendChild(span);
+            });
+
+            // Visual feedback on diagram
+            document.querySelectorAll('.node').forEach(n => n.classList.remove('scale-110'));
+            // In a real app we'd map this specific click to the SVG element
+        }
+
+        // Initialize with logical view
+        window.onload = () => switchView('logical');
+    </script>
+</body>
+</html>
