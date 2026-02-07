@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>State of AI in 2026: Interactive Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+        
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: #f8fafc;
+            scroll-behavior: smooth;
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.3);
+        }
+
+        .gradient-text {
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-link {
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Modal Styles */
+        #dataModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            background: rgba(0, 0, 0, 0.8);
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .category-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header / Navigation -->
+    <nav class="fixed top-0 w-full z-40 bg-slate-900/80 backdrop-blur-md border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-brain text-white text-sm"></i>
+                    </div>
+                    <span class="font-bold text-xl tracking-tight uppercase">State of <span class="text-indigo-400">AI</span> in 2026</span>
+                </div>
+                <div class="hidden md:flex space-x-8 text-sm font-medium text-slate-300">
+                    <a href="#overview" class="nav-link">Overview</a>
+                    <a href="#categories" class="nav-link">Categories</a>
+                    <a href="#quiz" class="nav-link">Knowledge Check</a>
+                </div>
+                <div class="w-auto"></div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header id="overview" class="pt-32 pb-16 px-4">
+        <div class="max-w-7xl mx-auto text-center">
+            <div class="inline-block px-4 py-1.5 mb-6 text-xs font-semibold tracking-widest text-indigo-400 uppercase bg-indigo-400/10 rounded-full border border-indigo-400/20">
+                Latest Research Update: Feb 2026
+            </div>
+            <h1 class="text-5xl md:text-7xl font-extrabold mb-6">
+                The State of <span class="gradient-text">Intelligence</span>
+            </h1>
+            <p class="max-w-2xl mx-auto text-slate-400 text-lg md:text-xl leading-relaxed">
+                A comprehensive interactive dashboard exploring the energy, economics, and educational impacts of the AI revolution.
+            </p>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-16">
+                <!-- AI Market Card -->
+                <div class="glass-card p-6 rounded-2xl text-center cursor-pointer group" onclick="openHeroModal('market')">
+                    <div class="text-3xl font-bold text-white mb-1 group-hover:text-indigo-400 transition-colors">$2.1T</div>
+                    <div class="text-xs text-slate-500 uppercase font-bold tracking-wider">AI Market 2026</div>
+                    <div class="mt-2 text-[10px] text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">View Research Context</div>
+                </div>
+                <!-- Compute Doubling Card -->
+                <div class="glass-card p-6 rounded-2xl text-center cursor-pointer group" onclick="openHeroModal('compute')">
+                    <div class="text-3xl font-bold text-white mb-1 group-hover:text-indigo-400 transition-colors">3.1mo</div>
+                    <div class="text-xs text-slate-500 uppercase font-bold tracking-wider">Compute Doubling</div>
+                    <div class="mt-2 text-[10px] text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">View Research Context</div>
+                </div>
+                <!-- Teacher Adoption Card -->
+                <div class="glass-card p-6 rounded-2xl text-center cursor-pointer group" onclick="openHeroModal('adoption')">
+                    <div class="text-3xl font-bold text-white mb-1 group-hover:text-indigo-400 transition-colors">92%</div>
+                    <div class="text-xs text-slate-500 uppercase font-bold tracking-wider">Teacher AI Adoption</div>
+                    <div class="mt-2 text-[10px] text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">View Research Context</div>
+                </div>
+                <!-- Energy Load Card -->
+                <div class="glass-card p-6 rounded-2xl text-center cursor-pointer group" onclick="openHeroModal('energy')">
+                    <div class="text-3xl font-bold text-white mb-1 group-hover:text-indigo-400 transition-colors">1.2 PWh</div>
+                    <div class="text-xs text-slate-500 uppercase font-bold tracking-wider">Data Center Load</div>
+                    <div class="mt-2 text-[10px] text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">View Research Context</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Category Grid -->
+    <section id="categories" class="py-20 bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+                <div>
+                    <h2 class="text-3xl font-bold mb-2">Research Categories</h2>
+                    <p class="text-slate-400">Select a domain to explore the latest 2026 breakthroughs.</p>
+                </div>
+                <div class="flex gap-2">
+                    <span class="h-1 w-12 bg-indigo-500 rounded-full"></span>
+                    <span class="h-1 w-4 bg-slate-700 rounded-full"></span>
+                    <span class="h-1 w-4 bg-slate-700 rounded-full"></span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="categoryGrid">
+                <!-- Categories will be injected here by JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Quiz Section -->
+    <section id="quiz" class="py-20 px-4">
+        <div class="max-w-3xl mx-auto">
+            <div class="glass-card p-8 md:p-12 rounded-3xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-8 opacity-10">
+                    <i class="fas fa-lightbulb text-8xl text-indigo-400"></i>
+                </div>
+                
+                <h2 class="text-3xl font-bold mb-8">AI Literacy Check</h2>
+                <div id="quizContent">
+                    <div id="questionContainer">
+                        <p id="questionText" class="text-xl text-slate-200 mb-6 font-medium">Loading question...</p>
+                        <div id="optionsGrid" class="grid grid-cols-1 gap-4">
+                            <!-- Options injected here -->
+                        </div>
+                    </div>
+                    <div id="quizResult" class="hidden">
+                        <div class="text-center">
+                            <div class="text-6xl mb-4">🎉</div>
+                            <h3 class="text-2xl font-bold mb-2">Quiz Complete!</h3>
+                            <p id="scoreText" class="text-slate-400 mb-8 font-medium"></p>
+                            <button onclick="resetQuiz()" class="bg-indigo-600 hover:bg-indigo-500 px-8 py-3 rounded-xl font-bold transition-all">Try Again</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-white/5 bg-slate-950 px-4">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center">
+                    <i class="fas fa-brain text-white text-xs"></i>
+                </div>
+                <span class="font-bold text-lg uppercase tracking-wider">State of AI in 2026</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Data Modal -->
+    <div id="dataModal">
+        <div class="glass-card max-w-2xl w-full p-8 rounded-3xl shadow-2xl relative">
+            <button onclick="closeModal()" class="absolute top-6 right-6 text-slate-400 hover:text-white">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <div id="modalContent">
+                <h3 id="modalTitle" class="text-2xl font-bold mb-4 gradient-text">Category Title</h3>
+                <div id="modalBody" class="text-slate-300 leading-relaxed space-y-4">
+                    <!-- Content injected here -->
+                </div>
+            </div>
+            <div class="mt-8 pt-6 border-t border-white/10 flex justify-end">
+                <button onclick="closeModal()" class="bg-slate-800 hover:bg-slate-700 px-6 py-2 rounded-lg text-sm font-bold transition-all">Dismiss</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Hero Metric Context Data
+        const heroStats = {
+            market: {
+                title: "AI Global Market Dynamics",
+                details: [
+                    "**2.1 Trillion Dollar Milestone:** This figure represents the total economic value of AI hardware, software, and autonomous services globally.",
+                    "**Growth Velocity:** Since 2024, the market has seen a 35% CAGR, primarily driven by enterprise-wide integration of 'Agentic' workflows.",
+                    "**Key Sectors:** Healthcare AI and Automated Industrial Robotics are the fastest-growing sub-sectors in 2026."
+                ]
+            },
+            compute: {
+                title: "The Death of Moore's Law",
+                details: [
+                    "**3.1 Month Doubling:** While Moore's Law focused on transistor count, AI Compute focuses on floating-point operations (FLOPs). AI performance is now doubling every quarter.",
+                    "**Silicon Shifts:** The move to 2nm process nodes and 'optical compute' (using light instead of electricity) is maintaining this breakneck speed.",
+                    "**Model Scale:** Frontier models in 2026 are 100x more computationally efficient than 2024 benchmarks."
+                ]
+            },
+            adoption: {
+                title: "Educational Paradigm Shift",
+                details: [
+                    "**92% Teacher Integration:** This isn't just usage; it's active integration. 9 out of 10 teachers now use AI for adaptive lesson planning and real-time IEP (Individualized Education Program) adjustments.",
+                    "**Administrative Relief:** AI has reduced teachers' non-instructional workload (grading/emails) by an average of 15 hours per week.",
+                    "**Curriculum Focus:** Curricula have shifted from rote memorization to 'AI Literacy' and 'Critical Reasoning' as primary outcomes."
+                ]
+            },
+            energy: {
+                title: "The Petawatt-Hour Era",
+                details: [
+                    "**1.2 PWh Consumption:** AI-specific data centers now consume more energy than the nation of Italy.",
+                    "**Nuclear Integration:** tech giants now own or operate 15% of the global fleet of small modular reactors (SMRs) to ensure 24/7 uptime.",
+                    "**Carbon Intensity:** While demand is high, 80% of new AI compute capacity in 2026 is coupled with dedicated renewable or nuclear sources."
+                ]
+            }
+        };
+
+        const categories = [
+            {
+                id: 'energy',
+                title: 'Energy & Sustainability',
+                icon: 'fa-bolt',
+                stat: '1,200 TWh Demand',
+                summary: 'By 2026, AI data centers are revitalizing nuclear energy, with tech giants reopening reactors to meet 24/7 carbon-free power needs.',
+                details: [
+                    '**Nuclear Renaissance:** Microsoft and Amazon have finalized multi-decade deals with nuclear plants (e.g., Three Mile Island) to power Blackwell-class clusters.',
+                    '**Efficiency Paradox:** While hardware efficiency increases, the "Jevons Paradox" remains: making AI cheaper leads to exponentially more usage.',
+                    '**Water Crisis:** Training a single Frontier model now requires over 10 million liters of water for cooling, leading to "Dry Cooling" innovations.'
+                ]
+            },
+            {
+                id: 'compute',
+                title: 'Computing Power',
+                icon: 'fa-microchip',
+                stat: '3.1mo Doubling',
+                summary: 'The "Scaling Laws" persist. Compute demand is outstripping silicon supply, leading to the rise of specialized AI ASICs.',
+                details: [
+                    '**Agentic Hardware:** Chips in 2026 are now optimized for "Reasoning Tokens" rather than just rapid output, facilitating autonomous agent behavior.',
+                    '**Local Intelligence:** Small Language Models (SLMs) now perform 2024-era GPT-4 tasks natively on smartphones and laptops.',
+                    '**Optical Interconnects:** 2026 marked the shift from copper to light-based data transfer between GPUs to eliminate latency bottlenecks.'
+                ]
+            },
+            {
+                id: 'revenue',
+                title: 'Market Revenue',
+                icon: 'fa-chart-line',
+                stat: '$2.1T Global Value',
+                summary: 'AI has transitioned from a capital expense to the primary revenue driver for 60% of Fortune 500 companies.',
+                details: [
+                    '**Enterprise ROI:** Companies are finally seeing double-digit margin growth by automating middle-office tasks via agentic workflows.',
+                    '**SME Explosion:** Easy-to-deploy AI APIs have allowed small businesses to scale personalized marketing and customer support at near-zero marginal cost.',
+                    '**Subscription Fatigue:** Shift from monthly seats to "Outcome-Based" pricing (paying per successful task completed by an AI agent).'
+                ]
+            },
+            {
+                id: 'education',
+                title: 'AI in Teaching',
+                icon: 'fa-graduation-cap',
+                stat: '92% Adoption',
+                summary: 'Education has pivoted from "Detecting AI" to "Co-Creating with AI," with literacy now a core K-12 graduation requirement.',
+                details: [
+                    '**Hyper-Personalization:** Every student has a 24/7 AI tutor that understands their emotional state and specific knowledge gaps.',
+                    '**Teacher Empowerment:** AI handles 70% of grading and administrative work, allowing teachers to focus exclusively on mentorship and soft skills.',
+                    '**The Assessment Shift:** High-stakes testing has shifted toward oral exams and project-based learning to prevent AI-generated academic dishonesty.'
+                ]
+            },
+            {
+                id: 'employment',
+                title: 'Employment Impact',
+                icon: 'fa-users',
+                stat: '45% Wage Premium',
+                summary: 'The labor market is bifurcating: workers who use AI are seeing record wage growth, while non-adopters face significant headwinds.',
+                details: [
+                    '**Prompt Engineering to Problem Architecting:** The role of the "Prompt Engineer" has evolved into the "System Architect," designing complex agent swarms.',
+                    '**The 4-Day Week:** Increased productivity is finally pushing major economies toward shortened work weeks for AI-augmented knowledge workers.',
+                    '**Universal Basic Computation:** Governments are debating subsidizing "Compute Access" as a new form of social welfare.'
+                ]
+            },
+            {
+                id: 'ethics',
+                title: 'Patents & Ethics',
+                icon: 'fa-scale-balanced',
+                stat: '72 States Regulated',
+                summary: 'The "Wild West" of AI has ended. 2026 is the year of strict global liability frameworks for autonomous systems.',
+                details: [
+                    '**Watermarking Laws:** All AI-generated content must now carry an invisible, cryptographic signature to be legally distributed.',
+                    '**Data Sovereignty:** The rise of "Personal Data Vaults" where individuals license their data to AI companies for micro-royalties.',
+                    '**Agent Liability:** Landmark 2025 court cases established that the *user*, not the developer, is responsible for the actions of autonomous agents.'
+                ]
+            }
+        ];
+
+        const quizData = [
+            {
+                question: "In 2026, what is the most significant trend in AI data center energy?",
+                options: ["Switching entirely to coal", "Nuclear energy partnerships", "Manual pedal power", "Reduced usage of electricity"],
+                correct: 1
+            },
+            {
+                question: "What is 'Outcome-Based' pricing in the 2026 AI market?",
+                options: ["Paying per minute of use", "Paying only for successful task completion", "Paying for model training costs", "A flat monthly fee for all users"],
+                correct: 1
+            },
+            {
+                question: "How has teacher workload changed according to 2026 research?",
+                options: ["Increased by 50%", "Remained exactly the same", "Decreased as AI handles 70% of grading/admin", "Teachers have been replaced by robots"],
+                correct: 2
+            },
+            {
+                question: "What is the doubling period for AI compute in 2026?",
+                options: ["2 years (Moore's Law)", "12 months", "3.1 months", "Once every decade"],
+                correct: 2
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+
+        function initCategories() {
+            const grid = document.getElementById('categoryGrid');
+            categories.forEach(cat => {
+                const card = document.createElement('div');
+                card.className = 'glass-card p-8 rounded-3xl cursor-pointer group';
+                card.onclick = () => openCategoryModal(cat.id);
+                card.innerHTML = `
+                    <div class="category-icon group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                        <i class="fas ${cat.icon} text-xl"></i>
+                    </div>
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-xl font-bold">${cat.title}</h3>
+                        <span class="text-xs font-bold text-indigo-400 bg-indigo-400/10 px-2 py-1 rounded-md uppercase">${cat.stat}</span>
+                    </div>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6">${cat.summary}</p>
+                    <div class="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest group-hover:text-indigo-400 transition-colors">
+                        Explore Data <i class="fas fa-arrow-right ml-1"></i>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // New function to handle Hero Stat Modals
+        function openHeroModal(key) {
+            const data = heroStats[key];
+            const title = document.getElementById('modalTitle');
+            const body = document.getElementById('modalBody');
+            
+            title.innerText = data.title;
+            body.innerHTML = data.details.map(d => {
+                const text = d.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>');
+                return `<div class="flex gap-4">
+                            <div class="mt-1.5"><div class="w-1.5 h-1.5 rounded-full bg-indigo-500"></div></div>
+                            <p>${text}</p>
+                        </div>`;
+            }).join('');
+            
+            document.getElementById('dataModal').style.display = 'flex';
+        }
+
+        function openCategoryModal(id) {
+            const cat = categories.find(c => c.id === id);
+            const title = document.getElementById('modalTitle');
+            const body = document.getElementById('modalBody');
+            
+            title.innerText = cat.title;
+            body.innerHTML = cat.details.map(d => {
+                const text = d.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>');
+                return `<div class="flex gap-4">
+                            <div class="mt-1.5"><div class="w-1.5 h-1.5 rounded-full bg-indigo-500"></div></div>
+                            <p>${text}</p>
+                        </div>`;
+            }).join('');
+            
+            document.getElementById('dataModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('dataModal').style.display = 'none';
+        }
+
+        // Quiz Logic
+        function loadQuestion() {
+            const q = quizData[currentQuestion];
+            document.getElementById('questionText').innerText = q.question;
+            const optionsGrid = document.getElementById('optionsGrid');
+            optionsGrid.innerHTML = '';
+            
+            q.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'text-left p-4 rounded-xl border border-white/10 hover:border-indigo-500 hover:bg-indigo-500/10 transition-all text-slate-300 hover:text-white group flex justify-between items-center';
+                btn.innerHTML = `<span>${opt}</span> <i class="fas fa-chevron-right opacity-0 group-hover:opacity-100 transition-opacity"></i>`;
+                btn.onclick = () => checkAnswer(index);
+                optionsGrid.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(idx) {
+            if (idx === quizData[currentQuestion].correct) {
+                score++;
+            }
+            
+            currentQuestion++;
+            if (currentQuestion < quizData.length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            document.getElementById('questionContainer').classList.add('hidden');
+            document.getElementById('quizResult').classList.remove('hidden');
+            document.getElementById('scoreText').innerText = `You correctly identified ${score} out of ${quizData.length} key trends from the 2026 landscape.`;
+        }
+
+        function resetQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            document.getElementById('questionContainer').classList.remove('hidden');
+            document.getElementById('quizResult').classList.add('hidden');
+            loadQuestion();
+        }
+
+        window.onload = () => {
+            initCategories();
+            loadQuestion();
+        };
+
+        window.onclick = (event) => {
+            if (event.target == document.getElementById('dataModal')) {
+                closeModal();
+            }
+        };
+    </script>
+</body>
+</html>
