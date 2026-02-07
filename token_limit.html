@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mastering AI Tokens: Interactive Lesson</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .gradient-text {
+            background: linear-gradient(90deg, #4f46e5, #9333ea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s;
+        }
+
+        .tab-active {
+            border-bottom: 4px solid #4f46e5;
+            color: #4f46e5;
+        }
+
+        .token-highlight {
+            background-color: #e0e7ff;
+            border: 1px solid #c7d2fe;
+            padding: 2px 4px;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 2px;
+            font-size: 0.85rem;
+        }
+
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            font-family: 'Courier New', Courier, monospace;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold mb-4">Mastering AI Token Limitations</h1>
+            <p class="text-gray-600 text-lg">A Guide to Optimizing AI Interactions</p>
+        </header>
+
+        <!-- Main Lesson Interface -->
+        <div class="card overflow-hidden">
+            <!-- Tabs -->
+            <div class="flex border-b bg-gray-50 overflow-x-auto">
+                <button onclick="switchTab('intro')" id="tab-intro" class="px-6 py-4 font-semibold text-gray-500 hover:text-indigo-600 tab-active">Core Concept</button>
+                <button onclick="switchTab('truncation')" id="tab-truncation" class="px-6 py-4 font-semibold text-gray-500 hover:text-indigo-600">1. Truncation</button>
+                <button onclick="switchTab('chunking')" id="tab-chunking" class="px-6 py-4 font-semibold text-gray-500 hover:text-indigo-600">2. Chunking</button>
+                <button onclick="switchTab('summary')" id="tab-summary" class="px-6 py-4 font-semibold text-gray-500 hover:text-indigo-600">3. Summarization</button>
+                <button onclick="switchTab('redundancy')" id="tab-redundancy" class="px-6 py-4 font-semibold text-gray-500 hover:text-indigo-600">4. Redundancy</button>
+                <button onclick="switchTab('finetune')" id="tab-finetune" class="px-6 py-4 font-semibold text-gray-500 hover:text-indigo-600">5. Fine-Tuning</button>
+            </div>
+
+            <!-- Content Area -->
+            <div class="p-8 min-h-[500px]">
+                
+                <!-- INTRO -->
+                <div id="content-intro" class="tab-content">
+                    <h2 class="text-2xl font-bold mb-4 text-indigo-900">What are Tokens?</h2>
+                    <p class="mb-4 text-gray-700 leading-relaxed">
+                        In AI, a <strong>token</strong> is the basic unit of text. It's not always a whole word; sometimes it's a syllable or even a single character. 
+                        Models like ChatGPT have a <strong>Context Window</strong> (a max token limit). If your prompt + the model's response exceeds this limit, the model starts to "forget" the beginning of the conversation.
+                    </p>
+                    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                        <p class="text-blue-800 font-medium italic">"Rule of thumb: 1,000 tokens is roughly 750 words."</p>
+                    </div>
+                    <div class="p-6 bg-gray-100 rounded-lg">
+                        <h3 class="font-bold mb-3">Visualization: How AI sees a sentence</h3>
+                        <div class="flex flex-wrap" id="token-viz">
+                            <span class="token-highlight">In</span>
+                            <span class="token-highlight">struct</span>
+                            <span class="token-highlight">ional</span>
+                            <span class="token-highlight">Design</span>
+                            <span class="token-highlight">is</span>
+                            <span class="token-highlight">crit</span>
+                            <span class="token-highlight">ical</span>
+                            <span class="token-highlight">for</span>
+                            <span class="token-highlight">on</span>
+                            <span class="token-highlight">line</span>
+                            <span class="token-highlight">learn</span>
+                            <span class="token-highlight">ing</span>
+                            <span class="token-highlight">.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TRUNCATION -->
+                <div id="content-truncation" class="tab-content hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h2 class="text-2xl font-bold mb-4 text-indigo-900">Method 1: Truncation</h2>
+                            <p class="text-gray-700 mb-4">The "Quick Cut." Simply removing words from the beginning or end to fit the limit.</p>
+                            <ul class="list-disc ml-6 space-y-2 text-gray-600">
+                                <li><strong>Pros:</strong> Fast, easy to automate.</li>
+                                <li><strong>Cons:</strong> High risk of losing critical context or instructions.</li>
+                            </ul>
+                            <div class="mt-6">
+                                <label class="block font-bold mb-2">Simulation: Remove last 3 words</label>
+                                <input type="text" id="trunc-input" value="This is probably a long sentence!" class="w-full border p-2 rounded mb-2">
+                                <button onclick="simulateTruncation()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Apply Truncation</button>
+                                <p class="mt-4 font-mono text-green-600" id="trunc-output"></p>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="code-block text-xs">
+<pre># Python Logic
+def truncate(text, i):
+    return ' '.join(text.split()[:-i])
+
+# Result: Removes last i words</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CHUNKING -->
+                <div id="content-chunking" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold mb-4 text-indigo-900">Method 2: Chunk Processing</h2>
+                    <p class="text-gray-700 mb-4">Break a large document into smaller sections. Process each part separately and stitch the results together.</p>
+                    <div class="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6">
+                        <p class="text-amber-800"><strong>Caution:</strong> The AI loses "Global Context." It won't know what happened in Chunk A while reading Chunk C.</p>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="flex-1 p-4 border rounded bg-white text-center">Chunk 1 (Intro) <br> <i class="fa fa-arrow-down mt-2"></i> <br> AI Analysis</div>
+                        <div class="flex-1 p-4 border rounded bg-white text-center">Chunk 2 (Body) <br> <i class="fa fa-arrow-down mt-2"></i> <br> AI Analysis</div>
+                        <div class="flex-1 p-4 border rounded bg-white text-center">Chunk 3 (Conclusion) <br> <i class="fa fa-arrow-down mt-2"></i> <br> AI Analysis</div>
+                    </div>
+                </div>
+
+                <!-- SUMMARIZATION -->
+                <div id="content-summary" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold mb-4 text-indigo-900">Method 3: Intelligent Summarization</h2>
+                    <p class="text-gray-700 mb-4">Condense the core meaning. Instead of feeding a whole transcript, provide a high-level summary of the context first.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-red-50 rounded">
+                            <h4 class="font-bold text-red-700 mb-2">High Token Prompt:</h4>
+                            <p class="text-sm">"It's such a fine day today. The sun is out and the sky is blue. I'm wondering if you can tell me what the weather will be like tomorrow?"</p>
+                        </div>
+                        <div class="p-4 bg-green-50 rounded">
+                            <h4 class="font-bold text-green-700 mb-2">Low Token (Condensed):</h4>
+                            <p class="text-sm">"Tell me the weather forecast for tomorrow."</p>
+                        </div>
+                    </div>
+                    <p class="mt-4 text-gray-600">Both achieve the same goal, but the green box saves significant "token real estate."</p>
+                </div>
+
+                <!-- REDUNDANCY -->
+                <div id="content-redundancy" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold mb-4 text-indigo-900">Method 4: Stop Word Removal</h2>
+                    <p class="text-gray-700 mb-4">Modern LLMs are sophisticated enough to understand "Keyword-Dense" language. By removing "Stop Words" (the, is, at, which), you save space.</p>
+                    <div class="p-6 bg-slate-800 rounded text-white mb-6">
+                        <h4 class="text-indigo-400 font-bold mb-2">Try the Redundancy Filter:</h4>
+                        <textarea id="redundancy-input" class="w-full bg-slate-700 border-none p-3 rounded mb-2 text-sm" rows="3">The weather forecast for the city of Austin tomorrow is what I need.</textarea>
+                        <button onclick="removeRedundancy()" class="bg-indigo-500 px-4 py-2 rounded text-sm hover:bg-indigo-400">Filter Stop Words</button>
+                        <div id="redundancy-result" class="mt-4 p-3 bg-slate-900 rounded border border-slate-700 text-green-400 font-mono text-sm"></div>
+                    </div>
+                </div>
+
+                <!-- FINE TUNING -->
+                <div id="content-finetune" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold mb-4 text-indigo-900">Method 5: Fine-Tuning</h2>
+                    <p class="text-gray-700 mb-4">Instead of explaining the rules to the AI in every prompt (using up tokens), you train a custom version of the model that already knows your specific grading rubric or style.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                        <div class="p-4 border border-indigo-200 rounded text-center">
+                            <div class="text-2xl mb-2 text-indigo-600 font-bold">1</div>
+                            <h5 class="font-bold">Gather Data</h5>
+                            <p class="text-xs text-gray-500">Collect examples of your specific task.</p>
+                        </div>
+                        <div class="p-4 border border-indigo-200 rounded text-center">
+                            <div class="text-2xl mb-2 text-indigo-600 font-bold">2</div>
+                            <h5 class="font-bold">Train Model</h5>
+                            <p class="text-xs text-gray-500">Update model weights with your data.</p>
+                        </div>
+                        <div class="p-4 border border-indigo-200 rounded text-center">
+                            <div class="text-2xl mb-2 text-indigo-600 font-bold">3</div>
+                            <h5 class="font-bold">Efficiency Gain</h5>
+                            <p class="text-xs text-gray-500">Produce better results with shorter prompts.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+            <!-- Knowledge Check Section -->
+            <div class="bg-indigo-900 p-8 text-white">
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i class="fa fa-lightbulb text-yellow-400"></i> Quick Quiz
+                </h3>
+                <div id="quiz-container">
+                    <p class="mb-4">Which method is best for processing a 50-page open-source textbook to extract a syllabus?</p>
+                    <div class="space-y-2">
+                        <button onclick="checkQuiz(this, false)" class="block w-full text-left p-3 rounded bg-indigo-800 hover:bg-indigo-700 transition">A) Truncation (Delete the last 40 pages)</button>
+                        <button onclick="checkQuiz(this, true)" class="block w-full text-left p-3 rounded bg-indigo-800 hover:bg-indigo-700 transition">B) Chunking (Split into chapters and summarize each)</button>
+                        <button onclick="checkQuiz(this, false)" class="block w-full text-left p-3 rounded bg-indigo-800 hover:bg-indigo-700 transition">C) Fine-tuning (Build a new AI from scratch)</button>
+                    </div>
+                </div>
+                <div id="quiz-feedback" class="mt-4 hidden p-4 rounded bg-green-800">
+                    Correct! Chunking allows you to process the whole book piece-by-piece without losing entire chapters.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(id) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('button[id^="tab-"]').forEach(el => el.classList.remove('tab-active', 'text-indigo-600'));
+            document.getElementById('content-' + id).classList.remove('hidden');
+            document.getElementById('tab-' + id).classList.add('tab-active', 'text-indigo-600');
+        }
+
+        function simulateTruncation() {
+            const input = document.getElementById('trunc-input').value;
+            const words = input.split(' ');
+            if (words.length > 3) {
+                const result = words.slice(0, -3).join(' ');
+                document.getElementById('trunc-output').innerText = "Output: " + result;
+            } else {
+                document.getElementById('trunc-output').innerText = "Not enough words to truncate!";
+            }
+        }
+
+        function removeRedundancy() {
+            const input = document.getElementById('redundancy-input').value;
+            const stopwords = ['the', 'is', 'for', 'of', 'and', 'a', 'to', 'in', 'it', 'what', 'i'];
+            const words = input.toLowerCase().replace(/[.,!]/g, "").split(' ');
+            const filtered = words.filter(w => !stopwords.includes(w));
+            document.getElementById('redundancy-result').innerText = "Filtered Keywords: " + filtered.join(' ');
+        }
+
+        function checkQuiz(btn, isCorrect) {
+            if (isCorrect) {
+                document.getElementById('quiz-feedback').classList.remove('hidden');
+                btn.classList.add('bg-green-600');
+            } else {
+                btn.classList.add('bg-red-600');
+                setTimeout(() => btn.classList.remove('bg-red-600'), 1000);
+            }
+        }
+    </script>
+</body>
+</html>
